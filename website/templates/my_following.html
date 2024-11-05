@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Usuarios que Sigues{% endblock %}
+
+{% block content %}
+<h1>Usuarios que Sigues</h1>
+<ul>
+  {% for follow in following %}
+      <li>
+          {{ follow.followed_user.first_name }} ({{ follow.followed_user.email }})
+          <form action="{{ url_for('views.unfollow', user_id=follow.followed_user.id) }}" method="POST" style="display:inline;">
+              <button type="submit" class="btn btn-danger">Dejar de Seguir</button>
+          </form>
+      </li>
+  {% endfor %}
+</ul>
+{% endblock %}

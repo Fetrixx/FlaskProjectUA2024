@@ -5,17 +5,22 @@
 {% block content %}
 
 <h1 align="center">Notas</h1>
+
+<!-- Notas del usuario actual -->
+<h2>Mis Notas</h2>
 <ul class="list-group list-group-flush" id="notes">
-  {% for note in user.notes %}
+  {% for note in user_notes %}
   <li class="list-group-item">
-    {{ note.data }}
-    <button type="button" class="close" onclick="deleteNote({{note.id}})"> <!-- onClick="deleteNote({{ note.id }})"-->
+    {{ note.data }} <br>
+    <small>Publicado el: {{ note.date.strftime('%d-%m-%Y %I:%M:%S %p') }}</small>
+    <button type="button" class="close" onclick="deleteNote({{ note.id }})">
       <span aria-hidden="true">&times;</span>
     </button>
   </li>
   {% endfor %}
 </ul>
 
+<!-- Formulario para agregar una nueva nota -->
 <form method="POST">
   <textarea name="note" id="note" class="form-control"></textarea>
   <br />
@@ -23,5 +28,16 @@
     <button type="submit" class="btn btn-primary">Agregar Nota</button>
   </div>
 </form>
+
+<!-- Notas de los usuarios seguidos -->
+<h2>Notas de Usuarios Seguidos</h2>
+<ul class="list-group list-group-flush">
+  {% for note in followed_notes %}
+  <li class="list-group-item">
+    <strong>{{ note.author.first_name }}</strong>: {{ note.data }} <br>
+    <small>Publicado el: {{ note.date.strftime('%d-%m-%Y %I:%M:%S %p') }}</small> <!-- Aquí se usa strftime -->
+  </li>
+  {% endfor %}
+</ul>
 
 {% endblock %}
