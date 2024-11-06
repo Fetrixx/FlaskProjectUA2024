@@ -1,6 +1,6 @@
 from flask import Blueprint, redirect, render_template, request, flash, jsonify, url_for
 from flask_login import login_required, current_user
-from .models import Like, Note, Publication, User, Follow, Comment
+from .models import Like, Note, Profile, Publication, User, Follow, Comment
 from . import db
 import json
 from datetime import datetime
@@ -55,11 +55,14 @@ def home():
 
     # Cargar todos los comentarios asociados a las publicaciones
     for post in all_posts:
-        post.comments = Comment.query.filter_by(publication_id=post.id).all()  # Cargar todos los comentarios de la publicación
-        # Verificar si el usuario actual ha dado "me gusta"
-        post.liked = Like.query.filter_by(user_id=current_user.id, publication_id=post.id).first() is not None
+        post.comments = Comment.query.filter_by(publication_id=post.id).all()
+        for comment in post.comments:
+            comment.liked = Like.query.filter_by(user_id=current_user.id, comment_id=comment.id).first() is not None
+            comment.likes_count = Like.query.filter_by(comment_id=comment.id).count()
+
 
     return render_template("home.html", user=current_user, posts=all_posts)
+
 
 def extract_video_id(url):
     """Extrae el ID del video de una URL de YouTube."""
@@ -94,7 +97,10 @@ def follow(user_id):
     else:
         flash('No puedes seguirte a ti mismo o el usuario no existe.', category='error')
     
-    return redirect('/')
+    # Redirige a la página anterior o a la raíz en todos los casos
+    return redirect(request.referrer or '/')
+
+
 
 @views.route('/unfollow/<int:user_id>', methods=['POST'])
 @login_required
@@ -212,37 +218,96 @@ def profile(user_id):
 def edit_profile(user_id):
     user = User.query.get_or_404(user_id)
 
-    if request.method == 'POST':
-        user.bio = request.form.get('bio')
-        user.profile_picture = request.form.get('profile_picture')  # Si decides permitir cambiar la imagen
+    # Verificar si el usuario que intenta editar es el usuario actual
+    if user.id != current_user.id:
+        flash('No tienes permiso para editar este perfil.', category='error')
+        return redirect(url_for('views.home'))
+
+    # Cargar el perfil del usuario
+    profile = Profile.query.filter_by(user_id=user.id).first()
+    if not profile:
+        # Crear un perfil si no existe
+        profile = Profile(user_id=user.id)
+        db.session.add(profile)
         db.session.commit()
+
+
+    if request.method == 'POST':
+        username = request.form.get('username')
+        first_name = request.form.get('first_name')
+        bio = request.form.get('bio')
+        background_picture = request.form.get('background_picture')
+        
+            
+        # Imprimir datos antes de la edición
+        print("Datos del usuario antes de la edición:")
+        print("Username:", user.username)
+        print("name:", user.first_name)
+        print("Bio:", profile.bio)
+        print("Profile Picture:", user.profile_picture)
+        print("Background Picture:", profile.background_picture)
+
+        # Actualizar datos
+        # user.username = username
+        user.first_name = first_name
+        profile.bio = bio
+        profile.background_picture = background_picture
+
+        db.session.commit()
+
+        # Imprimir datos después de la edición
+        print("Datos del usuario después de la edición:")
+        print("Username:", user.username)
+        print("name:", user.first_name)
+        print("Bio:", profile.bio)
+        print("Profile Picture:", user.profile_picture)
+        print("Background Picture:", profile.background_picture)
+
         flash('Perfil actualizado correctamente!', category='success')
         return redirect(url_for('views.profile', user_id=user.id))
 
-    return render_template('edit_profile.html', user=user)
+    return render_template('edit_profile.html', user=user, profile=profile)
+
+
+
 
 @views.route('/like/<int:publication_id>', methods=['POST'])
 @login_required
 def like_publication(publication_id):
     publication = Publication.query.get_or_404(publication_id)
-    
-    # Verifica si el usuario ya ha dado "me gusta"
     existing_like = Like.query.filter_by(user_id=current_user.id, publication_id=publication.id).first()
-    
+
     if existing_like:
-        # Si ya existe el like, lo eliminamos
         db.session.delete(existing_like)
-        publication.likes_count -= 1  # Decrementar el contador de likes
+        publication.likes_count -= 1
         flash('Has quitado tu "me gusta".', category='info')
     else:
-        # Si no existe, creamos uno nuevo
         new_like = Like(user_id=current_user.id, publication_id=publication.id)
         db.session.add(new_like)
-        publication.likes_count += 1  # Incrementar el contador de likes
+        publication.likes_count += 1
         flash('Has dado "me gusta" a la publicación.', category='success')
 
-    db.session.commit()  # Commit después de agregar o eliminar
+    db.session.commit()
+    return redirect(request.referrer or url_for('views.home'))
 
+@views.route('/like-comment/<int:comment_id>', methods=['POST'])
+@login_required
+def like_comment(comment_id):
+    comment = Comment.query.get(comment_id)
+    if not comment:
+        flash('Comentario no encontrado.', category='error')
+        return redirect(url_for('views.home'))
+
+    like = Like.query.filter_by(user_id=current_user.id, comment_id=comment_id).first()
+    if like:
+        db.session.delete(like)
+        flash('Me gusta eliminado del comentario', category='success')
+    else:
+        new_like = Like(user_id=current_user.id, comment_id=comment_id)
+        db.session.add(new_like)
+        flash('Te gusta el comentario!', category='success')
+
+    db.session.commit()
     return redirect(url_for('views.home'))
 
 
@@ -281,4 +346,5 @@ def user_list():
     
     return render_template('user_list.html', users=users, user=current_user)
     '''''
+    
     

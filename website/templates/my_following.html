@@ -6,21 +6,19 @@
 <div class="container mt-4">
     <h1>Usuarios que Sigues</h1>
 
-        <span>
-            <!-- Campo de búsqueda -->
-            <form method="GET" action="{{ url_for('views.my_following') }}" 
-                class="mb-4 d-flex flex-row justify-content-start align-items-center col-12 col-md-8" style="height: 48px;">
-                
-                <input type="text" name="query" value="{{ query }}" class="form-control" placeholder="Buscar por nombre o correo" style="height: 48px;">
-                <button type="submit" class="btn btn-primary d-none d-md-block" style="height: 48px;">
-                    Buscar
-                </button>
-                <button type="submit" class="btn btn-primary d-flex d-md-none justify-content-center align-items-center" style="height: 48px; width: 48px">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                </button>
-                
-            </form>
-        </span>
+    <span>
+        <!-- Campo de búsqueda -->
+        <form method="GET" action="{{ url_for('views.my_following') }}" 
+            class="mb-4 d-flex flex-row justify-content-start align-items-center col-12 col-md-8" style="height: 48px;">
+            <input type="text" name="query" value="{{ query }}" class="form-control" placeholder="Buscar por nombre o correo" style="height: 48px;">
+            <button type="submit" class="btn btn-primary d-none d-md-block" style="height: 48px;">
+                Buscar
+            </button>
+            <button type="submit" class="btn btn-primary d-flex d-md-none justify-content-center align-items-center" style="height: 48px; width: 48px">
+                <i class="fa-solid fa-magnifying-glass"></i>
+            </button>
+        </form>
+    </span>
 
     <div class="d-flex flex-column flex-sm-row flex-wrap" style="gap: 20px">
         {% if following %}
@@ -28,21 +26,28 @@
                 <div class="mb-3">
                     <div class="card d-flex flex-row justify-content-center align-items-center">
                         <div style="margin: 20px;">
-                            {% if follow.followed_user.profile_picture %}
-                                <img src="{{ follow.followed_user.profile_picture }}" class="card-img-top" alt="{{ user.first_name }}"
-                                    style="width: 100px; height: 100px; border-radius: 50%;">
-                            {% else %}
-                                <img src="{{ url_for('static', filename='images/user-placeholder.jpg') }}" class="card-img-top" alt="{{ user.first_name }}"
-                                    style="width: 100px; height: 100px; border-radius: 50%;">
-                            {% endif %}
-                            </div>
+                          {% if follow.followed_user.profile_picture %}
+                            <img src="{{ follow.followed_user.profile_picture }}" class="card-img-top" alt="{{ follow.followed_user.first_name }}"
+                                style="width: 100px; height: 100px; border-radius: 50%;">
+                          {% else %}
+                            <img src="{{ url_for('static', filename='images/user-placeholder.jpg') }}" class="card-img-top" alt="{{ follow.followed_user.first_name }}"
+                                style="width: 100px; height: 100px; border-radius: 50%;">
+                          {% endif %}
+                        </div>
+
                         <div class="card-body">
-                            <h4 class="card-title">{{ follow.followed_user.first_name }}
-                            <form action="{{ url_for('views.unfollow', user_id=follow.followed_user.id) }}" method="POST" style="display:inline;">
-                                <button type="submit" class="btn btn-danger px-2 py-1 ml-2" style="width: fit-content; height: fit-content; font-size: 14px">
-                                    Dejar de Seguir
-                                </button>
-                            </form>
+                            <h4 class="card-title d-inline-flex justify-content-start align-items-center">
+                              <span>
+                                {{ follow.followed_user.first_name }}
+                                <span class="username">
+                                    @{{ follow.followed_user.username }} 
+                                </span>
+                              </span>
+
+                                <form action="{{ url_for('views.unfollow', user_id=follow.followed_user.id) }}" method="POST" style="display:inline;">
+                                    <button type="submit" class="btn btn-danger px-2 py-1 ml-2"
+                                        style="width: fit-content; height: fit-content; font-size: 14px">Dejar de Seguir</button>
+                                </form>
                             </h4>
                             <p class="card-text">{{ follow.followed_user.email }}</p>
                         </div>
@@ -50,7 +55,7 @@
                 </div>
             {% endfor %}
         {% else %}
-            <span class="w-100 d-flex justify-content-center align-items-center" style=" font-weight:lighter; font-style: italic;">
+            <span class="w-100 d-flex justify-content-center align-items-center" style="font-weight:lighter; font-style: italic;">
               No se encontraron Usuarios...
             </span>
         {% endif %}
