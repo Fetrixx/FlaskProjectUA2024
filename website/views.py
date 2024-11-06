@@ -1,6 +1,6 @@
 from flask import Blueprint, redirect, render_template, request, flash, jsonify, url_for
 from flask_login import login_required, current_user
-from .models import Note, User, Follow
+from .models import Note, Publication, User, Follow, Comment
 from . import db
 import json
 from datetime import datetime
@@ -14,32 +14,25 @@ views = Blueprint('views', __name__)
 @login_required
 def home():
     if request.method == 'POST': 
-        note = request.form.get('note')
+        post_content = request.form.get('post')
 
-        if len(note) < 1:
-            flash('La nota es muy corta!', category='error') 
+        if len(post_content) < 1:
+            flash('La publicación es muy corta!', category='error') 
         else:
-            new_note = Note(data=note, user_id=current_user.id)
-            db.session.add(new_note)
+            new_post = Publication(data=post_content, user_id=current_user.id)
+            db.session.add(new_post)
             db.session.commit()
-            flash('Nota agregada correctamente!', category='success')
+            flash('Publicación agregada correctamente!', category='success')
 
-    # Obtener las notas del usuario actual
-    user_notes = current_user.notes
-    # Obtener los IDs de los usuarios que el usuario actual está siguiendo
     followed_ids = {follow.followed_id for follow in current_user.followed}
     
-    # Obtener las notas de los usuarios seguidos, excluyendo las del usuario actual
-    followed_notes = Note.query.filter(Note.user_id.in_(followed_ids), Note.user_id != current_user.id).all()
+    all_posts = Publication.query.filter(Publication.user_id.in_(followed_ids.union({current_user.id}))).order_by(Publication.date.desc()).all()
 
-    # Obtener la zona horaria local
-    local_tz = get_localzone()
+    # Aquí puedes cargar todos los comentarios asociados a las publicaciones
+    for post in all_posts:
+        post.comments = Comment.query.filter_by(publication_id=post.id).all()  # Cargar todos los comentarios de la publicación
 
-    # Convertir y formatear las fechas a la zona horaria local
-    for note in followed_notes:
-        note.date = note.date.astimezone(local_tz)  # Convierte a la zona horaria local
-
-    return render_template("home.html", user=current_user, user_notes=user_notes, followed_notes=followed_notes)
+    return render_template("home.html", user=current_user, posts=all_posts)
 
 @views.route('/delete-note', methods=['POST'])
 def delete_note():  
@@ -100,3 +93,47 @@ def user_list():
     users = [user for user in all_users if user.id not in followed_ids and user.id != current_user.id]
     
     return render_template('user_list.html', users=users, user=current_user)
+
+@views.route('/comment/<int:publication_id>', methods=['POST'])
+@login_required
+def comment(publication_id):
+    comment_content = request.form.get('comment')
+    parent_comment_id = request.form.get('parent_id')  # Puede ser None si es un nuevo comentario
+
+    print(f"Comentario: {comment_content}, Parent ID: {parent_comment_id}")  # Para depuración
+
+    if len(comment_content) < 1:
+        flash('El comentario es muy corto!', category='error')
+    else:
+        new_comment = Comment(data=comment_content, user_id=current_user.id, publication_id=publication_id, parent_id=parent_comment_id)
+        db.session.add(new_comment)
+        db.session.commit()
+        flash('Comentario agregado correctamente!', category='success')
+
+    return redirect(url_for('views.home'))
+
+@views.route('/delete-comment/<int:comment_id>', methods=['POST'])
+@login_required
+def delete_comment(comment_id):
+    comment = Comment.query.get(comment_id)
+    if comment and comment.user_id == current_user.id:
+        db.session.delete(comment)
+        db.session.commit()
+        flash('Comentario eliminado correctamente!', category='success')
+    else:
+        flash('No puedes eliminar este comentario.', category='error')
+    
+    return redirect(url_for('views.home'))
+
+@views.route('/delete-publication/<int:publication_id>', methods=['POST'])
+@login_required
+def delete_publication(publication_id):
+    publication = Publication.query.get(publication_id)
+    if publication and publication.user_id == current_user.id:
+        db.session.delete(publication)
+        db.session.commit()
+        flash('Publicación eliminada correctamente!', category='success')
+    else:
+        flash('No puedes eliminar esta publicación.', category='error')
+    
+    return redirect(url_for('views.home'))

@@ -25,3 +25,23 @@ class Follow(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     follower_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     followed_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    
+class Publication(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    data = db.Column(db.String(10000))
+    date = db.Column(db.DateTime(timezone=True), default=func.now())
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user = db.relationship('User', backref='publications')  # Relación con el usuario
+    
+
+class Comment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    data = db.Column(db.String(1000))
+    date = db.Column(db.DateTime(timezone=True), default=func.now())
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    publication_id = db.Column(db.Integer, db.ForeignKey('publication.id'))
+    parent_id = db.Column(db.Integer, db.ForeignKey('comment.id'), nullable=True)  # Para comentarios anidados
+    
+    user = db.relationship('User', backref='comments')
+    publication = db.relationship('Publication', backref='comments')
+    parent = db.relationship('Comment', remote_side=[id], backref='replies')  # Relación recursiva

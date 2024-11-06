@@ -4,40 +4,140 @@
 
 {% block content %}
 
-<h1 align="center">Notas</h1>
+<h1 align="center">Publicaciones</h1>
 
-<!-- Notas del usuario actual -->
-<h2>Mis Notas</h2>
-<ul class="list-group list-group-flush" id="notes">
-  {% for note in user_notes %}
-  <li class="list-group-item">
-    {{ note.data }} <br>
-    <small>Publicado el: {{ note.date.strftime('%d-%m-%Y %I:%M:%S %p') }}</small>
-    <button type="button" class="close" onclick="deleteNote({{ note.id }})">
-      <span aria-hidden="true">&times;</span>
-    </button>
-  </li>
-  {% endfor %}
-</ul>
-
-<!-- Formulario para agregar una nueva nota -->
-<form method="POST">
-  <textarea name="note" id="note" class="form-control"></textarea>
+<!-- Formulario para agregar una nueva publicación -->
+<form method="POST" class="mb-4">
+  <textarea name="post" id="post" class="form-control" placeholder="¿Qué estás pensando?" required></textarea>
   <br />
   <div align="center">
-    <button type="submit" class="btn btn-primary">Agregar Nota</button>
+    <button type="submit" class="btn btn-primary">
+      <i class="fas fa-paper-plane"></i> <!-- Ícono de enviar -->
+    </button>
   </div>
 </form>
 
-<!-- Notas de los usuarios seguidos -->
-<h2>Notas de Usuarios Seguidos</h2>
-<ul class="list-group list-group-flush">
-  {% for note in followed_notes %}
-  <li class="list-group-item">
-    <strong>{{ note.author.first_name }}</strong>: {{ note.data }} <br>
-    <small>Publicado el: {{ note.date.strftime('%d-%m-%Y %I:%M:%S %p') }}</small> <!-- Aquí se usa strftime -->
-  </li>
+<!-- Todas las Publicaciones -->
+<h2>Todas las Publicaciones</h2>
+<div class="list-group">
+  {% for post in posts %}
+  <div class="list-group-item">
+      <div class="media">
+          <img src="{{ url_for('static', filename='images/user-placeholder.jpg') }}" alt="{{ post.user.first_name }}" class="mr-3 rounded-circle" style="width: 50px; height: 50px;">
+          <div class="media-body">
+              <h5 class="mt-0">{{ post.user.first_name }} <small class="text-muted">{{ post.date.strftime('%d-%m-%Y %I:%M:%S %p') }}</small></h5>
+              {{ post.data }}
+          </div>
+      </div>
+
+      <div class="ml-2">
+          <!-- Botón para mostrar el formulario de comentario -->
+        <span class="ml-4 my-2 d-flex justify-content-start align-items-center">
+          <button onclick="toggleCommentForm({{ post.id }})" class="btn btn-link">
+            <i class="fa-solid fa-comment"></i>
+          </button>
+        </span>
+
+        <!-- Formulario para agregar un comentario (oculto por defecto) -->
+        <div id="commentForm-{{ post.id }}" style="display:none;" class="comment-form mb-3">
+          <form method="POST" action="{{ url_for('views.comment', publication_id=post.id) }}">
+            <textarea name="comment" class="form-control" placeholder="Escribe un comentario..." required></textarea>
+            <span class="d-flex justify-content-end align-items-center">
+              <button type="submit" class="btn btn-primary mt-2">
+                <i class="fas fa-paper-plane"></i> <!-- Ícono de enviar -->
+              </button>
+            </span>
+          </form>
+        </div>
+      </div>
+
+      <!-- Mostrar comentarios -->
+      <div class="comments">
+        {% for comment in post.comments %}
+            {% if comment.parent_id is none %}
+                <div class="media mb-2 comment-root"> <!-- Clase para el primer comentario -->
+                    <img src="{{ url_for('static', filename='images/user-placeholder.jpg') }}" alt="{{ comment.user.first_name }}" class="mr-3 rounded-circle" style="width: 30px; height: 30px;">
+                    <div class="media-body">
+                        <h6>{{ comment.user.first_name }} <small class="text-muted">{{ comment.date.strftime('%d-%m-%Y %I:%M:%S %p') }}</small></h6>
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                          <span>
+                            {{ comment.data }}
+                          </span>
+                          
+                          <span id="actions">
+                            <!-- Botón para eliminar el comentario -->
+                            <form method="POST" action="{{ url_for('views.delete_comment', comment_id=comment.id) }}" style="display:inline;">
+                              <button type="submit" class="btn btn-link text-danger delete-comment-btn" onclick="return confirmDelete(event);">
+                                <i class="fas fa-trash-alt"></i> <!-- Ícono de eliminar -->
+                              </button>
+                            </form>
+  
+                            <!-- Botón para responder -->
+                            <button onclick="toggleReplyForm({{ comment.id }})" class="btn btn-link reply-btn">
+                              <i class="fa-solid fa-reply"></i>
+                            </button>
+                          </span>
+  
+                        </div>
+
+                        <!-- Formulario de respuesta (oculto por defecto) -->
+                        <div id="replyForm-{{ comment.id }}" style="display:none;" class="reply-form mt-2">
+                            <form method="POST" action="{{ url_for('views.comment', publication_id=post.id) }}">
+                                <input type="hidden" name="parent_id" value="{{ comment.id }}">
+                                <textarea name="comment" class="form-control mt-2" placeholder="Escribe tu respuesta..." required></textarea>
+                                <span class="d-flex justify-content-end align-items-center">
+                                  <button type="submit" class="btn btn-primary mt-2">
+                                    <i class="fas fa-paper-plane"></i> <!-- Ícono de enviar -->
+                                  </button>
+                                </span>
+                            </form>
+                        </div>
+
+                        <!-- Mostrar respuestas anidadas -->
+                      {% for reply in post.comments %}
+                        {% if reply.parent_id == comment.id %}
+                        <div class="media ml-4 mb-2">
+                            <img src="{{ url_for('static', filename='images/user-placeholder.jpg') }}" alt="{{ reply.user.first_name }}" class="mr-3 rounded-circle" style="width: 30px; height: 30px;">
+                            <div class="media-body">
+                                <h6>{{ reply.user.first_name }} <small class="text-muted">{{ reply.date.strftime('%d-%m-%Y %I:%M:%S %p') }}</small></h6>
+                                {{ reply.data }}
+                                
+                                <!-- Botón para eliminar la respuesta -->
+                                <form method="POST" action="{{ url_for('views.delete_comment', comment_id=reply.id) }}" style="display:inline;">
+                                    <button type="submit" class="btn btn-link text-danger delete-comment-btn" onclick="return confirmDelete(event);">
+                                        <i class="fas fa-trash-alt"></i> <!-- Ícono de eliminar -->
+                                    </button>
+                                </form>
+
+                                <!-- Botón para responder a la respuesta -->
+                                <button onclick="toggleReplyForm({{ reply.id }})" class="btn btn-link reply-btn">
+                                  <i class="fa-solid fa-reply"></i>
+                                </button>
+
+                                <!-- Formulario de respuesta a la respuesta (oculto por defecto) -->
+                                <div id="replyForm-{{ reply.id }}" style="display:none;" class="reply-form mt-2">
+                                    <form method="POST" action="{{ url_for('views.comment', publication_id=post.id) }}">
+                                        <input type="hidden" name="parent_id" value="{{ reply.id }}">
+                                        <textarea name="comment" class="form-control mt-2" placeholder="Escribe tu respuesta..." required></textarea>
+                                        <span class="d-flex justify-content-end align-items-center">
+                                          <button type="submit" class="btn btn-primary mt-2">
+                                            <i class="fas fa-paper-plane"></i> <!-- Ícono de enviar -->
+                                          </button>
+                                        </span>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                      {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+  </div>
   {% endfor %}
-</ul>
+</div>
 
 {% endblock %}

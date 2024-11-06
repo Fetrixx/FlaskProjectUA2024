@@ -48,3 +48,54 @@ h2 {
 .alert {
     margin-bottom: 20px; /* Espaciado inferior para las alertas */
 }
+
+/* styles.css */
+
+.list-group-item {
+    border: none; /* Sin borde */
+    padding: 15px; /* Espaciado interno */
+}
+
+.media {
+    display: flex;
+    align-items: flex-start; /* Alinear la imagen y el texto */
+}
+
+.media img {
+    margin-right: 15px; /* Espaciado entre la imagen y el texto */
+}
+
+.media-body {
+    background-color: #f8f9fa; /* Fondo claro para las publicaciones */
+    border-radius: 5px; /* Bordes redondeados */
+    padding: 10px; /* Espaciado interno */
+}
+
+h2 {
+    margin-top: 30px; /* Espaciado superior para los encabezados */
+}
+
+.reply-form {
+    display: none; /* Oculta el formulario por defecto */
+}
+
+.hidden {
+    display: none;
+}
+
+/* Estilo para el primer comentario (anidado del post) */
+.comment-root {
+    margin-top: 15px; /* Espaciado superior para el primer comentario */
+    padding-left: 10px; /* Espaciado a la izquierda */
+    border-left: 3px solid #007bff; /* Línea a la izquierda para indicar anidación */
+    background-color: #f1f1f1; /* Fondo claro para diferenciarlo */
+}
+
+/* Estilo para los comentarios anidados */
+.reply-form {
+    margin-top: 10px; /* Espaciado superior para el formulario de respuesta */
+}
+
+.media {
+    margin-bottom: 10px; /* Espaciado entre comentarios */
+}
