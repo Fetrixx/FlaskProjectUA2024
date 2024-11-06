@@ -3,15 +3,44 @@
 {% block title %}Usuarios que Sigues{% endblock %}
 
 {% block content %}
-<h1>Usuarios que Sigues</h1>
-<ul>
-  {% for follow in following %}
-      <li>
-          {{ follow.followed_user.first_name }} ({{ follow.followed_user.email }})
-          <form action="{{ url_for('views.unfollow', user_id=follow.followed_user.id) }}" method="POST" style="display:inline;">
-              <button type="submit" class="btn btn-danger">Dejar de Seguir</button>
-          </form>
-      </li>
-  {% endfor %}
-</ul>
+<div class="container mt-4">
+    <h1>Usuarios que Sigues</h1>
+
+        <span>
+            <!-- Campo de búsqueda -->
+            <form method="GET" action="{{ url_for('views.my_following') }}" 
+                class="mb-4 d-flex flex-row justify-content-start align-items-center col-12 col-md-8" style="height: 48px;">
+                
+                <input type="text" name="query" value="{{ query }}" class="form-control" placeholder="Buscar por nombre o correo" style="height: 48px;">
+                <button type="submit" class="btn btn-primary d-none d-md-block" style="height: 48px;">
+                    Buscar
+                </button>
+                <button type="submit" class="btn btn-primary d-flex d-md-none justify-content-center align-items-center" style="height: 48px; width: 48px">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </button>
+                
+            </form>
+        </span>
+
+    <div class="d-flex flex-column flex-sm-row flex-wrap" style="gap: 20px">
+        {% for follow in following %}
+            <div class="mb-3">
+                <div class="card d-flex flex-row justify-content-center align-items-center">
+                    <img src="{{ url_for('static', filename='images/user-placeholder.jpg') }}" class="card-img-top" alt="{{ follow.followed_user.first_name }}"
+                        style="width: 150px; height: 150px; border-radius: 50%; margin-right: 5px;">
+                    <div class="card-body">
+                        <h4 class="card-title">{{ follow.followed_user.first_name }}
+                          <form action="{{ url_for('views.unfollow', user_id=follow.followed_user.id) }}" method="POST" style="display:inline;">
+                            <button type="submit" class="btn btn-danger px-2 py-1 ml-2" style="width: fit-content; height: fit-content; font-size: 14px">
+                                Dejar de Seguir
+                            </button>
+                          </form>
+                        </h4>
+                        <p class="card-text">{{ follow.followed_user.email }}</p>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
 {% endblock %}

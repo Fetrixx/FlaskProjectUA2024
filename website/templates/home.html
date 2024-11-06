@@ -24,31 +24,30 @@
   <div class="list-group-item">
       <div class="media">
           <img src="{{ url_for('static', filename='images/user-placeholder.jpg') }}" alt="{{ post.user.first_name }}" class="mr-3 rounded-circle" style="width: 50px; height: 50px;">
-          <div class="media-body">
+          <span class="w-100 d-flex flex-column justify-content-start align-items-center">
+            <div class="media-body w-100">
               <h5 class="mt-0">{{ post.user.first_name }} <small class="text-muted">{{ post.date.strftime('%d-%m-%Y %I:%M:%S %p') }}</small></h5>
               {{ post.data }}
-          </div>
-      </div>
-
-      <div class="ml-2">
-          <!-- Botón para mostrar el formulario de comentario -->
-        <span class="ml-4 my-2 d-flex justify-content-start align-items-center">
-          <button onclick="toggleCommentForm({{ post.id }})" class="btn btn-link">
-            <i class="fa-solid fa-comment"></i>
-          </button>
-        </span>
-
-        <!-- Formulario para agregar un comentario (oculto por defecto) -->
-        <div id="commentForm-{{ post.id }}" style="display:none;" class="comment-form mb-3">
-          <form method="POST" action="{{ url_for('views.comment', publication_id=post.id) }}">
-            <textarea name="comment" class="form-control" placeholder="Escribe un comentario..." required></textarea>
-            <span class="d-flex justify-content-end align-items-center">
-              <button type="submit" class="btn btn-primary mt-2">
-                <i class="fas fa-paper-plane"></i> <!-- Ícono de enviar -->
+            </div>
+              <!-- Botón para mostrar el formulario de comentario -->
+            <span class="d-flex justify-content-start align-items-center w-100">
+              <button onclick="toggleCommentForm({{ post.id }})" class="btn btn-link">
+                <i class="fa-solid fa-comment"></i>
               </button>
             </span>
-          </form>
-        </div>
+            <!-- Formulario para agregar un comentario (oculto por defecto) -->
+            <div id="commentForm-{{ post.id }}" style="display:none;" class="comment-form mb-3 w-100">
+              <form method="POST" action="{{ url_for('views.comment', publication_id=post.id) }}">
+                <textarea name="comment" class="form-control" placeholder="Escribe un comentario..." required></textarea>
+                <span class="d-flex justify-content-end align-items-center">
+                  <button type="submit" class="btn btn-primary mt-2">
+                    <i class="fas fa-paper-plane"></i> <!-- Ícono de enviar -->
+                  </button>
+                </span>
+              </form>
+            </div>
+          </span>
+
       </div>
 
       <!-- Mostrar comentarios -->

@@ -99,3 +99,7 @@ h2 {
 .media {
     margin-bottom: 10px; /* Espaciado entre comentarios */
 }
+
+.container {
+    max-width: 1000px;
+}

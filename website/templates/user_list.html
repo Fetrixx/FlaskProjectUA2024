@@ -3,13 +3,45 @@
 {% block title %}Lista de Usuarios{% endblock %}
 
 {% block content %}
-<h1>Lista de Usuarios</h1>
-<ul>
-  {% for user in users %}
-      <li>
-          {{ user.first_name }} ({{ user.email }})
-          <a href="{{ url_for('views.follow', user_id=user.id) }}">Seguir</a>
-      </li>
-  {% endfor %}
-</ul>
+<div class="container mt-4">
+    <h1>Lista de Usuarios</h1>
+
+    <span>  
+      <!-- Campo de búsqueda -->
+      <form method="GET" action="{{ url_for('views.user_list') }}" 
+        class="mb-4 d-flex flex-row justify-content-start align-items-center col-12 col-md-8" style="height: 48px;">
+        <input type="text" name="query" value="{{ query }}" class="form-control" placeholder="Buscar por nombre o correo" style="height: 48px;">
+        <button type="submit" class="btn btn-primary d-none d-md-block" style="height: 48px;">
+          Buscar
+        </button>
+        <button type="submit" class="btn btn-primary d-flex d-md-none justify-content-center align-items-center" style="height: 48px; width: 48px">
+          <i class="fa-solid fa-magnifying-glass"></i>
+        </button>
+      </form>
+    </span>
+
+    <div class="d-flex flex-column flex-sm-row flex-wrap" style="gap: 20px">
+        {% if users %}
+            {% for user in users %}
+                <div class="mb-3">
+                    <div class="card d-flex flex-row justify-content-center align-items-center">
+                        <img src="{{ url_for('static', filename='images/user-placeholder.jpg') }}" class="card-img-top" alt="{{ user.first_name }}"
+                            style="width: 150px; height: 150px; border-radius: 50%; margin-right: 5px;">
+                        <div class="card-body">
+                            <h4 class="card-title">{{ user.first_name }}
+                                <a href="{{ url_for('views.follow', user_id=user.id) }}" class="btn btn-primary px-2 py-1 ml-2"
+                                    style="width: fit-content; height:fit-content; font-size: 14px">Seguir</a>
+                            </h4>
+                            <p class="card-text">{{ user.email }}</p>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <span class="w-100 d-flex justify-content-center align-items-center" style=" font-weight:lighter; font-style: italic;">
+              No se encontraron Usuarios...
+            </span>
+        {% endif %}
+    </div>
+</div>
 {% endblock %}

@@ -52,7 +52,7 @@
     </nav>
   -->
 
-
+<!--
   <nav class="navbar navbar-expand-md navbar-dark bg-dark">
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar">
         <span class="navbar-toggler-icon"></span>
@@ -82,6 +82,41 @@
         {% endif %}
     </div>
   </nav>
+-->
+
+
+<nav class="navbar navbar-expand-md navbar-dark bg-dark">
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar">
+      <span class="navbar-toggler-icon"></span>
+  </button>
+  <div class="collapse navbar-collapse" id="navbar">
+      <ul class="navbar-nav mr-auto">
+          {% if user.is_authenticated %}
+              <li class="nav-item"><a class="nav-link" id="home" href="/">Inicio</a></li>
+              <li class="nav-item"><a class="nav-link" id="users" href="{{ url_for('views.user_list') }}">Usuarios</a></li>
+              <li class="nav-item"><a class="nav-link" id="my-following" href="{{ url_for('views.my_following') }}">Mis Seguidos</a></li>
+          {% else %}
+              <li class="nav-item"><a class="nav-link" id="login" href="/login">Iniciar Sesion</a></li>
+              <li class="nav-item"><a class="nav-link" id="signUp" href="/sign-up">Registro</a></li>
+          {% endif %}
+      </ul>
+
+      {% if user.is_authenticated %}
+      <div class="dropdown ml-auto">
+          <button class="btn btn-secondary dropdown-toggle" type="button" id="userDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              <img src="{{ url_for('static', filename='images/user-placeholder.jpg') }}" alt="{{ user.first_name }}" style="width: 30px; height: 30px; border-radius: 50%; margin-right: 5px;">
+              {{ user.first_name }}
+          </button>
+          <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userDropdown">
+              <a class="dropdown-item" href="{{ url_for('views.profile', user_id=user.id) }}"> Mi perfil: {{ user.first_name }}</a>
+              <a class="dropdown-item" href="/logout">Cerrar Sesión</a>
+          </div>
+      </div>
+      {% endif %}
+  </div>
+</nav>
+
+
 
     <!-- Dentro de este bloque, se muestran los mensajes de la pagina.-->
      <!--
@@ -126,7 +161,7 @@
         {% endif %}
     {% endwith %}
 
-    <div class="container  mt-">
+    <div class="container  mt-4" >
       {% block content %} 
 
       <!-- Dentro de este bloque, se encontraran las vistas de la pagina.-->
@@ -155,6 +190,9 @@
 
 
     <script src="{{ url_for('static', filename='js/index.js') }}"></script>
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
 
 {% block javascript %}
     <script type="text/javascript">

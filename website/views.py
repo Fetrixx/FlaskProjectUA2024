@@ -74,26 +74,6 @@ def unfollow(user_id):
 
     return redirect(url_for('views.my_following'))
 
-# Nueva ruta para ver a quién sigue el usuario
-@views.route('/my-following')
-@login_required
-def my_following():
-    following_users = current_user.followed.all()
-    return render_template('my_following.html', following=following_users, user=current_user)  # Asegúrate de pasar 'user=current_user'
-
-# Nueva ruta para ver todos los usuarios
-@views.route('/users')
-@login_required
-def user_list():
-    # Obtener todos los usuarios
-    all_users = User.query.all()
-    # Obtener los IDs de los usuarios que el usuario actual está siguiendo
-    followed_ids = {follow.followed_id for follow in current_user.followed}
-    # Filtrar solo los usuarios que no están siendo seguidos y que no son el usuario actual
-    users = [user for user in all_users if user.id not in followed_ids and user.id != current_user.id]
-    
-    return render_template('user_list.html', users=users, user=current_user)
-
 @views.route('/comment/<int:publication_id>', methods=['POST'])
 @login_required
 def comment(publication_id):
@@ -137,3 +117,90 @@ def delete_publication(publication_id):
         flash('No puedes eliminar esta publicación.', category='error')
     
     return redirect(url_for('views.home'))
+
+
+# Nueva ruta para ver a quién sigue el usuario
+@views.route('/my-following', methods=['GET'])
+@login_required
+def my_following():
+    query = request.args.get('query', '')
+    following_users = current_user.followed.all()
+
+    # Filtrar usuarios según la búsqueda
+    if query:
+        following_users = [follow for follow in following_users if query.lower() in follow.followed_user.first_name.lower() or query.lower() in follow.followed_user.email.lower()]
+
+    return render_template('my_following.html', following=following_users, user=current_user, query=query)
+
+
+# Nueva ruta para ver todos los usuarios
+@views.route('/users', methods=['GET'])
+@login_required
+def user_list():
+    query = request.args.get('query', '')
+    
+    # Obtener todos los usuarios
+    all_users = User.query.all()
+    
+    # Obtener los IDs de los usuarios que el usuario actual está siguiendo
+    followed_ids = {follow.followed_id for follow in current_user.followed}
+    
+    # Filtrar solo los usuarios que no están siendo seguidos y que no son el usuario actual
+    users = [user for user in all_users if user.id not in followed_ids and user.id != current_user.id]
+
+    # Filtrar usuarios según la búsqueda
+    if query:
+        users = [user for user in users if query.lower() in user.first_name.lower() or query.lower() in user.email.lower()]
+
+    return render_template('user_list.html', users=users, user=current_user, query=query)
+
+'''''
+# Nueva ruta para ver a quién sigue el usuario
+@views.route('/my-following')
+@login_required
+def my_following():
+    following_users = current_user.followed.all()
+    return render_template('my_following.html', following=following_users, user=current_user)  # Asegúrate de pasar 'user=current_user'
+
+# Nueva ruta para ver todos los usuarios
+@views.route('/users')
+@login_required
+def user_list():
+    # Obtener todos los usuarios
+    all_users = User.query.all()
+    # Obtener los IDs de los usuarios que el usuario actual está siguiendo
+    followed_ids = {follow.followed_id for follow in current_user.followed}
+    # Filtrar solo los usuarios que no están siendo seguidos y que no son el usuario actual
+    users = [user for user in all_users if user.id not in followed_ids and user.id != current_user.id]
+    
+    return render_template('user_list.html', users=users, user=current_user)
+    '''''
+    
+@views.route('/profile/<int:user_id>', methods=['GET'])
+@login_required
+def profile(user_id):
+    user = User.query.get_or_404(user_id)  # Obtener el usuario o lanzar un error 404
+    followers_count = user.followers.count()  # Contar seguidores
+    following_count = user.followed.count()    # Contar seguidos
+    posts = Publication.query.filter_by(user_id=user.id).order_by(Publication.date.desc()).all()  # Obtener posts del usuario
+    posts_count = len(posts)  # Contar publicaciones
+
+    is_current_user = (current_user.id == user.id)  # Verificar si es el perfil del usuario actual
+    is_following = current_user.id in [follow.follower_id for follow in user.followers]  # Verificar si está siguiendo
+
+    return render_template('profile.html', user=user, followers_count=followers_count, following_count=following_count, posts=posts, posts_count=posts_count, is_current_user=is_current_user, is_following=is_following)
+
+
+@views.route('/edit-profile/<int:user_id>', methods=['GET', 'POST'])
+@login_required
+def edit_profile(user_id):
+    user = User.query.get_or_404(user_id)
+
+    if request.method == 'POST':
+        user.bio = request.form.get('bio')
+        user.profile_picture = request.form.get('profile_picture')  # Si decides permitir cambiar la imagen
+        db.session.commit()
+        flash('Perfil actualizado correctamente!', category='success')
+        return redirect(url_for('views.profile', user_id=user.id))
+
+    return render_template('edit_profile.html', user=user)
