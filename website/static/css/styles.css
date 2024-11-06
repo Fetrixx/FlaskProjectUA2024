@@ -103,3 +103,20 @@ h2 {
 .container {
     max-width: 1000px;
 }
+
+
+.responsive-video {
+    position: relative;
+    padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+    height: 0; /* Height is set to zero to maintain aspect ratio */
+    overflow: hidden; /* Hides anything that overflows the container */
+}
+
+.responsive-video iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%; /* Make the iframe take up the full width */
+    height: 100%; /* Make the iframe take up the full height */
+    border: none; /* Remove default border */
+}

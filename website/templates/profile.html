@@ -7,7 +7,11 @@
     <h1>Perfil de {{ user.first_name }}</h1>
     <div class="card mb-4">
         <div class="card-body text-center">
-            <img src="{{ url_for('static', filename='images/user-placeholder.jpg') }}" alt="{{ user.first_name }}" class="rounded-circle" style="width: 150px; height: 150px;">
+            {% if user.profile_picture %}
+                <img src="{{ user.profile_picture }}" alt="{{ user.first_name }}" class="rounded-circle" style="width: 150px; height: 150px;">
+            {% else %}
+                <img src="{{ url_for('static', filename='images/user-placeholder.jpg') }}" alt="{{ user.first_name }}" class="rounded-circle" style="width: 150px; height: 150px;">
+            {% endif %}
             <h2>{{ user.first_name }}</h2>
             <p class="text-muted">{{ user.email }}</p>
             <p>{{ user.bio }}</p> <!-- Biografía -->
@@ -51,3 +55,4 @@
     </div>
 </div>
 {% endblock %}
+

@@ -17,7 +17,7 @@ class User(db.Model, UserMixin):
     first_name = db.Column(db.String(150))
     notes = db.relationship('Note', backref='author', lazy=True)
     bio = db.Column(db.Text)  # Campo para la biografía
-    profile_picture = db.Column(db.String(200))  # URL de la imagen de perfil
+    profile_picture = db.Column(db.String(200), default='https://t3.ftcdn.net/jpg/06/33/54/78/360_F_633547842_AugYzexTpMJ9z1YcpTKUBoqBF0CUCk10.jpg')  # URL de la imagen de perfil por defecto
     date_joined = db.Column(db.DateTime(timezone=True), default=func.now())
     last_login = db.Column(db.DateTime(timezone=True), nullable=True)
     
@@ -36,11 +36,13 @@ class Publication(db.Model):
     title = db.Column(db.String(200))
     data = db.Column(db.String(10000))
     content_type = db.Column(db.String(50))  # Ejemplo: 'text', 'image', 'video'
+    image_url = db.Column(db.String(200), nullable=True)  # URL de la imagen
+    video_url = db.Column(db.String(200), nullable=True)  # URL del video
     date = db.Column(db.DateTime(timezone=True), default=func.now())
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     user = db.relationship('User', backref='publications')  # Relación con el usuario
     likes_count = db.Column(db.Integer, default=0)
-    
+
 
 class Comment(db.Model):
     id = db.Column(db.Integer, primary_key=True)

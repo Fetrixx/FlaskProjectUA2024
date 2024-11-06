@@ -53,3 +53,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
   */
 });
+
+
+function toggleUrlFields() {
+    const contentType = document.getElementById('content_type').value;
+    const imageField = document.getElementById('image_url_field');
+    const videoField = document.getElementById('video_url_field');
+
+    if (contentType === 'image') {
+        imageField.style.display = 'block';
+        videoField.style.display = 'none';
+    } else if (contentType === 'video') {
+        videoField.style.display = 'block';
+        imageField.style.display = 'none';
+    } else {
+        imageField.style.display = 'none';
+        videoField.style.display = 'none';
+    }
+}

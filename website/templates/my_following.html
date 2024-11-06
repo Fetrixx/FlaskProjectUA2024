@@ -23,24 +23,37 @@
         </span>
 
     <div class="d-flex flex-column flex-sm-row flex-wrap" style="gap: 20px">
-        {% for follow in following %}
-            <div class="mb-3">
-                <div class="card d-flex flex-row justify-content-center align-items-center">
-                    <img src="{{ url_for('static', filename='images/user-placeholder.jpg') }}" class="card-img-top" alt="{{ follow.followed_user.first_name }}"
-                        style="width: 150px; height: 150px; border-radius: 50%; margin-right: 5px;">
-                    <div class="card-body">
-                        <h4 class="card-title">{{ follow.followed_user.first_name }}
-                          <form action="{{ url_for('views.unfollow', user_id=follow.followed_user.id) }}" method="POST" style="display:inline;">
-                            <button type="submit" class="btn btn-danger px-2 py-1 ml-2" style="width: fit-content; height: fit-content; font-size: 14px">
-                                Dejar de Seguir
-                            </button>
-                          </form>
-                        </h4>
-                        <p class="card-text">{{ follow.followed_user.email }}</p>
+        {% if following %}
+            {% for follow in following %}
+                <div class="mb-3">
+                    <div class="card d-flex flex-row justify-content-center align-items-center">
+                        <div style="margin: 20px;">
+                            {% if follow.followed_user.profile_picture %}
+                                <img src="{{ follow.followed_user.profile_picture }}" class="card-img-top" alt="{{ user.first_name }}"
+                                    style="width: 100px; height: 100px; border-radius: 50%;">
+                            {% else %}
+                                <img src="{{ url_for('static', filename='images/user-placeholder.jpg') }}" class="card-img-top" alt="{{ user.first_name }}"
+                                    style="width: 100px; height: 100px; border-radius: 50%;">
+                            {% endif %}
+                            </div>
+                        <div class="card-body">
+                            <h4 class="card-title">{{ follow.followed_user.first_name }}
+                            <form action="{{ url_for('views.unfollow', user_id=follow.followed_user.id) }}" method="POST" style="display:inline;">
+                                <button type="submit" class="btn btn-danger px-2 py-1 ml-2" style="width: fit-content; height: fit-content; font-size: 14px">
+                                    Dejar de Seguir
+                                </button>
+                            </form>
+                            </h4>
+                            <p class="card-text">{{ follow.followed_user.email }}</p>
+                        </div>
                     </div>
                 </div>
-            </div>
-        {% endfor %}
+            {% endfor %}
+        {% else %}
+            <span class="w-100 d-flex justify-content-center align-items-center" style=" font-weight:lighter; font-style: italic;">
+              No se encontraron Usuarios...
+            </span>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

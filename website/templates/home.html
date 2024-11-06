@@ -1,6 +1,6 @@
-{% extends "base.html" %} 
+{% extends "base.html" %}
 
-{% block title %} Inicio {% endblock %} 
+{% block title %} Inicio {% endblock %}
 
 {% block content %}
 
@@ -8,14 +8,35 @@
 
 <!-- Formulario para agregar una nueva publicación -->
 <form method="POST" class="mb-4">
+
   <textarea name="post" id="post" class="form-control" placeholder="¿Qué estás pensando?" required></textarea>
+  
+  <div class="form-group mt-3" id="image_url_field" style="display: none;">
+    <label for="image_url">URL de Imagen:</label>
+    <input type="text" name="image_url" id="image_url" class="form-control" placeholder="Ingresa la URL de la imagen">
+  </div>
+
+  <div class="form-group mt-3" id="video_url_field" style="display: none;">
+    <label for="video_url">URL de Video:</label>
+    <input type="text" name="video_url" id="video_url" class="form-control" placeholder="Ingresa la URL del video">
+  </div>
+
   <br />
-  <div align="center">
+  <div class="d-flex flex-row justify-content-between align-items-center">
+    <div class="form-group">
+      <label for="content_type">Tipo de Publicación:</label>
+      <select name="content_type" id="content_type" class="form-control" required onchange="toggleUrlFields()">
+        <option value="text">Texto</option>
+        <option value="image">Imagen</option>
+        <option value="video">Video</option>
+      </select>
+    </div>
     <button type="submit" class="btn btn-primary">
       <i class="fas fa-paper-plane"></i> <!-- Ícono de enviar -->
     </button>
   </div>
 </form>
+
 
 <!-- Todas las Publicaciones -->
 <h2>Todas las Publicaciones</h2>
@@ -25,16 +46,50 @@
       <div class="media">
           <img src="{{ url_for('static', filename='images/user-placeholder.jpg') }}" alt="{{ post.user.first_name }}" class="mr-3 rounded-circle" style="width: 50px; height: 50px;">
           <span class="w-100 d-flex flex-column justify-content-start align-items-center">
-            <div class="media-body w-100">
+            <div class="media-body w-100 d-inline-flex flex-column">
               <h5 class="mt-0">{{ post.user.first_name }} <small class="text-muted">{{ post.date.strftime('%d-%m-%Y %I:%M:%S %p') }}</small></h5>
-              {{ post.data }}
+              <span>
+                 <!-- Mostrar imagen si es una publicación de tipo imagen -->
+                {% if post.content_type == 'image' and post.image_url %}
+                  <img src="{{ post.image_url }}" alt="" class="img-fluid mt-2">
+                {% endif %}
+
+                <!-- Mostrar video si es una publicación de tipo video -->
+                {% if post.content_type == 'video' and post.video_url %}
+                <div class="responsive-video">
+                    <iframe src="{{ post.video_url }}" frameborder="0" allowfullscreen></iframe>
+                </div>
+                {% endif %}
+              </span>
+
+              <span >
+                {{ post.data }}
+              </span>
             </div>
-              <!-- Botón para mostrar el formulario de comentario -->
+
+            <!-- Botón para mostrar el formulario de comentario -->
             <span class="d-flex justify-content-start align-items-center w-100">
-              <button onclick="toggleCommentForm({{ post.id }})" class="btn btn-link">
-                <i class="fa-solid fa-comment"></i>
-              </button>
+              <span class="d-inline-flex flex-row justify-content-start align-items-center">
+                <button onclick="toggleCommentForm({{ post.id }})" class="btn btn-link">
+                  <i class="fa-solid fa-comment"></i>
+                  <span>
+                    {{ post.comments|length }}
+                  </span>
+                </button>
+              </span>
+              <!-- Botón para dar "me gusta" -->
+              <form method="POST" action="{{ url_for('views.like_publication', publication_id=post.id) }}" 
+                class="d-inline-flex flex-row justify-content-start align-items-center">
+                <button type="submit" class="btn btn-link text-primary">
+                  <i class="fas fa-thumbs-up" style="color: {{ 'blue' if post.liked else 'lightgray' }};"></i> 
+                  <span>
+                    {{ post.likes_count }}
+                  </span>
+                </button>
+                
+              </form>
             </span>
+
             <!-- Formulario para agregar un comentario (oculto por defecto) -->
             <div id="commentForm-{{ post.id }}" style="display:none;" class="comment-form mb-3 w-100">
               <form method="POST" action="{{ url_for('views.comment', publication_id=post.id) }}">
@@ -57,27 +112,29 @@
                 <div class="media mb-2 comment-root"> <!-- Clase para el primer comentario -->
                     <img src="{{ url_for('static', filename='images/user-placeholder.jpg') }}" alt="{{ comment.user.first_name }}" class="mr-3 rounded-circle" style="width: 30px; height: 30px;">
                     <div class="media-body">
-                        <h6>{{ comment.user.first_name }} <small class="text-muted">{{ comment.date.strftime('%d-%m-%Y %I:%M:%S %p') }}</small></h6>
-                        
-                        <div class="d-flex justify-content-between align-items-center">
+                        <span class="d-flex flex-row justify-content-between align-items-center">
+                          <h6 >
+                            {{ comment.user.first_name }} <small class="text-muted">{{ comment.date.strftime('%d-%m-%Y %I:%M:%S %p') }}</small>
+                          </h6>
                           <span>
-                            {{ comment.data }}
-                          </span>
-                          
-                          <span id="actions">
                             <!-- Botón para eliminar el comentario -->
+                            {% if comment.user_id == current_user.id %}
                             <form method="POST" action="{{ url_for('views.delete_comment', comment_id=comment.id) }}" style="display:inline;">
                               <button type="submit" class="btn btn-link text-danger delete-comment-btn" onclick="return confirmDelete(event);">
                                 <i class="fas fa-trash-alt"></i> <!-- Ícono de eliminar -->
                               </button>
                             </form>
-  
-                            <!-- Botón para responder -->
-                            <button onclick="toggleReplyForm({{ comment.id }})" class="btn btn-link reply-btn">
-                              <i class="fa-solid fa-reply"></i>
-                            </button>
+                            {% endif %}
                           </span>
-  
+                        </span>
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                          <span>{{ comment.data }}</span>
+
+                          <!-- Botón para responder -->
+                          <button onclick="toggleReplyForm({{ comment.id }})" class="btn btn-link reply-btn">
+                            <i class="fa-solid fa-reply"></i>
+                          </button>
                         </div>
 
                         <!-- Formulario de respuesta (oculto por defecto) -->
@@ -103,11 +160,13 @@
                                 {{ reply.data }}
                                 
                                 <!-- Botón para eliminar la respuesta -->
+                                {% if reply.user_id == current_user.id %}
                                 <form method="POST" action="{{ url_for('views.delete_comment', comment_id=reply.id) }}" style="display:inline;">
                                     <button type="submit" class="btn btn-link text-danger delete-comment-btn" onclick="return confirmDelete(event);">
                                         <i class="fas fa-trash-alt"></i> <!-- Ícono de eliminar -->
                                     </button>
                                 </form>
+                                {% endif %}
 
                                 <!-- Botón para responder a la respuesta -->
                                 <button onclick="toggleReplyForm({{ reply.id }})" class="btn btn-link reply-btn">
@@ -117,13 +176,9 @@
                                 <!-- Formulario de respuesta a la respuesta (oculto por defecto) -->
                                 <div id="replyForm-{{ reply.id }}" style="display:none;" class="reply-form mt-2">
                                     <form method="POST" action="{{ url_for('views.comment', publication_id=post.id) }}">
-                                        <input type="hidden" name="parent_id" value="{{ reply.id }}">
-                                        <textarea name="comment" class="form-control mt-2" placeholder="Escribe tu respuesta..." required></textarea>
-                                        <span class="d-flex justify-content-end align-items-center">
-                                          <button type="submit" class="btn btn-primary mt-2">
-                                            <i class="fas fa-paper-plane"></i> <!-- Ícono de enviar -->
-                                          </button>
-                                        </span>
+                                        <input type='hidden' name='parent_id' value='{{ reply.id }}'>
+                                        <textarea name='comment' placeholder='Escribe tu respuesta...' required></textarea>
+                                        <span><button type='submit'>Enviar</button></span>
                                     </form>
                                 </div>
                             </div>
