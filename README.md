@@ -40,3 +40,13 @@ Go to `http://127.0.0.1:5000`
 
 
 
+## to change between Production and Development/Testing
+
+uncomment the corresponding config.
+
+
+## Modelo MVC ?
+
+### /models: modelado de datos
+### /views: vistas, reciben las interacciones y las comunican con los services (controller), para manejar la logica
+### /services: Controladores, manejan la logica. 

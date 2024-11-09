@@ -8,7 +8,7 @@
 
     <span>  
       <!-- Campo de búsqueda -->
-      <form method="GET" action="{{ url_for('views.user_list') }}" 
+      <form method="GET" action="{{ url_for('user_views.user_list') }}" 
         class="mb-4 d-flex flex-row justify-content-start align-items-center col-12 col-md-8" style="height: 48px;">
         <input type="text" name="query" value="{{ query }}" class="form-control" placeholder="Buscar por nombre o correo" style="height: 48px;">
         <button type="submit" class="btn btn-primary d-none d-md-block" style="height: 48px;">
@@ -26,7 +26,7 @@
                 <div class="mb-3">
                     <div class="card d-flex flex-row justify-content-center align-items-center">
                         <div style="margin: 20px;">
-                          <a href="{{ url_for('views.profile', user_id=user.id) }}">
+                          <a href="{{ url_for('user_views.profile', user_id=user.id) }}">
                             {% if user.profile_picture %}
                               <img src="{{ user.profile_picture }}" class="card-img-top" alt="{{ user.first_name }}"
                                   style="width: 100px; height: 100px; border-radius: 50%;">
@@ -45,7 +45,7 @@
                                     @{{ user.username }} 
                                   </span>
                                 </span>
-                                <a href="{{ url_for('views.follow', user_id=user.id) }}" class="btn btn-primary px-2 py-1 ml-2"
+                                <a href="{{ url_for('follow_views.follow_route', user_id=user.id) }}" class="btn btn-primary px-2 py-1 ml-2"
                                     style="width: fit-content; height:fit-content; font-size: 14px">Seguir</a>
                             </h4>
                             <p class="card-text">{{ user.email }}</p>

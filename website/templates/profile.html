@@ -29,14 +29,14 @@
                                 <!-- boton seguir / editar -->
                                 <span class="ml-3">
                                     {% if is_current_user %}
-                                        <a href="{{ url_for('views.edit_profile', user_id=user.id) }}" class="btn btn-warning">Editar Perfil</a> <!-- Botón para editar -->
+                                        <a href="{{ url_for('user_views.edit_profile', user_id=user.id) }}" class="btn btn-warning">Editar Perfil</a> <!-- Botón para editar -->
                                     {% else %}
                                         {% if is_following %}
-                                            <form action="{{ url_for('views.unfollow', user_id=user.id) }}" method="POST" style="display:inline;">
+                                            <form action="{{ url_for('follow_views.unfollow_route', user_id=user.id) }}" method="POST" style="display:inline;">
                                                 <button type="submit" class="btn btn-danger mt-3">Dejar de Seguir</button>
                                             </form> 
                                         {% else %}
-                                            <form action="{{ url_for('views.follow', user_id=user.id) }}" method="POST" style="display:inline;">
+                                            <form action="{{ url_for('follow_views.follow_route', user_id=user.id) }}" method="POST" style="display:inline;">
                                                 <button type="submit" class="btn btn-primary mt-3">Seguir</button>
                                             </form>
                                         {% endif %}
@@ -51,9 +51,15 @@
                             <div class="d-flex flex-row" style="height: fit-content; gap:5px">
                                 <span class="badge badge-light">Publicaciones: {{ posts_count }}</span> <!-- Cantidad de publicaciones -->
                                 <span class="badge badge-light  ">Seguidores: {{ followers_count }}</span>
-                                <span onclick="goToUsersFollowed()" class="badge badge-primary" style="cursor: pointer;">
+                                {% if user.id == current_user.id %}
+                                    <span onclick="goToUsersFollowed()" class="badge badge-primary" style="cursor: pointer;">
+                                        Seguidos: {{ following_count }}
+                                    </span>                           
+                                {% else %}
+                                <span class="badge badge-primary">
                                     Seguidos: {{ following_count }}
-                                </span>                                
+                                </span>
+                                {% endif %}
                             </div>
                         </span>
 
@@ -83,7 +89,7 @@
                         <div class="d-flex flex-column justify-content-between" style="height:100%">
                             <span>
                                 <!-- Enlace para ver la publicación individual -->
-                                <a href="{{ url_for('views.view_post', post_id=post.id) }}"  class="btn btn-link d-inline" >
+                                <a href="{{ url_for('publication_views.view_post', post_id=post.id) }}"  class="btn btn-link d-inline" >
                                     <i class="fa-brands fa-readme"></i>
                                     Ver publicación
                                 </a>
