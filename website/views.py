@@ -1,6 +1,6 @@
 from flask import Blueprint, redirect, render_template, request, flash, jsonify, url_for
 from flask_login import login_required, current_user
-from .models import Like, Note, Profile, Publication, User, Follow, Comment
+from .models import Like, Profile, Publication, User, Follow, Comment, Message
 from . import db
 import json
 from datetime import datetime
@@ -12,13 +12,15 @@ views = Blueprint('views', __name__)
 @views.route('/', methods=['GET', 'POST'])
 @login_required
 def home():
+    playCuakSound = False
     if request.method == 'POST': 
         post_content = request.form.get('post')
         content_type = request.form.get('content_type')  # Obtener el tipo de contenido
         image_url = request.form.get('image_url')  # Obtener la URL de la imagen
         video_url = request.form.get('video_url')  # Obtener la URL del video
 
-        if len(post_content) > 0:
+        # if len(post_content) > 0:
+        if post_content and len(post_content) > 0:
             # Extraer ID del video si se proporciona una URL
             if content_type == 'video' and video_url:
                 # Extraer ID del video de YouTube
@@ -32,7 +34,7 @@ def home():
                         video_url=f"https://www.youtube.com/embed/{video_id}"  # URL de incrustación
                     )
                 else:
-                    flash('URL del video no válida.', category='error')
+                    flash(['URL del video no válida.'], category='error')
                     return redirect(url_for('views.home'))
             else:
                 new_post = Publication(
@@ -45,9 +47,10 @@ def home():
                 
             db.session.add(new_post)
             db.session.commit()
-            flash('Publicación agregada correctamente!', category='success')
+            playCuakSound = True
+            flash(['Publicación agregada correctamente!'], category='success')
         else:
-            flash('La publicación es muy corta!', category='error')
+            flash(['La publicación es muy corta!'], category='error')
 
     followed_ids = {follow.followed_id for follow in current_user.followed}
     
@@ -55,13 +58,16 @@ def home():
 
     # Cargar todos los comentarios asociados a las publicaciones
     for post in all_posts:
+        post.liked = Like.query.filter_by(user_id=current_user.id, publication_id=post.id).first() is not None
+        post.likes_count = Like.query.filter_by(publication_id=post.id).count()
+        
         post.comments = Comment.query.filter_by(publication_id=post.id).all()
         for comment in post.comments:
             comment.liked = Like.query.filter_by(user_id=current_user.id, comment_id=comment.id).first() is not None
             comment.likes_count = Like.query.filter_by(comment_id=comment.id).count()
 
 
-    return render_template("home.html", user=current_user, posts=all_posts)
+    return render_template("home.html", user=current_user, posts=all_posts, play_cuak=playCuakSound)
 
 
 def extract_video_id(url):
@@ -72,20 +78,9 @@ def extract_video_id(url):
         return url.split("v=")[-1]
     return None
 
-@views.route('/delete-note', methods=['POST'])
-def delete_note():  
-    note = json.loads(request.data)
-    noteId = note['noteId']
-    note = Note.query.get(noteId)
-    if note:
-        if note.user_id == current_user.id:
-            db.session.delete(note)
-            db.session.commit()
-
-    return jsonify({})
 
 # Nueva ruta para seguir a un usuario
-@views.route('/follow/<int:user_id>')
+@views.route('/follow/<int:user_id>', methods=['POST', 'GET'])
 @login_required
 def follow(user_id):
     user_to_follow = User.query.get(user_id)
@@ -93,15 +88,17 @@ def follow(user_id):
         follow_entry = Follow(follower_id=current_user.id, followed_id=user_to_follow.id)
         db.session.add(follow_entry)
         db.session.commit()
-        flash(f'Seguido a {user_to_follow.first_name} correctamente!', category='success')
+        flash([f'Seguido a {user_to_follow.first_name} correctamente!'], category='success')
     else:
-        flash('No puedes seguirte a ti mismo o el usuario no existe.', category='error')
+        flash(['No puedes seguirte a ti mismo o el usuario no existe.'], category='error')
     
     # Redirige a la página anterior o a la raíz en todos los casos
-    return redirect(request.referrer or '/')
+    return redirect(request.referrer or 'views.home')
 
 
 
+
+# Ruta para dejar de seguir a un usuario
 @views.route('/unfollow/<int:user_id>', methods=['POST'])
 @login_required
 def unfollow(user_id):
@@ -109,11 +106,13 @@ def unfollow(user_id):
     if follow_entry:
         db.session.delete(follow_entry)
         db.session.commit()
-        flash('Has dejado de seguir a este usuario.', category='success')
+        flash(['Has dejado de seguir a este usuario.'], category='success')
     else:
-        flash('No estás siguiendo a este usuario.', category='error')
+        flash(['No estás siguiendo a este usuario.'], category='error')
 
-    return redirect(url_for('views.my_following'))
+    return redirect(request.referrer or 'views.home')
+
+
 
 @views.route('/comment/<int:publication_id>', methods=['POST'])
 @login_required
@@ -124,12 +123,12 @@ def comment(publication_id):
     print(f"Comentario: {comment_content}, Parent ID: {parent_comment_id}")  # Para depuración
 
     if len(comment_content) < 1:
-        flash('El comentario es muy corto!', category='error')
+        flash(['El comentario es muy corto!'], category='error')
     else:
         new_comment = Comment(data=comment_content, user_id=current_user.id, publication_id=publication_id, parent_id=parent_comment_id)
         db.session.add(new_comment)
         db.session.commit()
-        flash('Comentario agregado correctamente!', category='success')
+        flash(['Comentario agregado correctamente!'], category='success')
 
     return redirect(url_for('views.home'))
 
@@ -140,9 +139,9 @@ def delete_comment(comment_id):
     if comment and comment.user_id == current_user.id:
         db.session.delete(comment)
         db.session.commit()
-        flash('Comentario eliminado correctamente!', category='success')
+        flash(['Comentario eliminado correctamente!'], category='success')
     else:
-        flash('No puedes eliminar este comentario.', category='error')
+        flash(['No puedes eliminar este comentario.'], category='error')
     
     return redirect(url_for('views.home'))
 
@@ -153,10 +152,10 @@ def delete_publication(publication_id):
     if publication and publication.user_id == current_user.id:
         db.session.delete(publication)
         db.session.commit()
-        flash('Publicación eliminada correctamente!', category='success')
+        flash(['Publicación eliminada correctamente!'], category='success')
     else:
-        flash('No puedes eliminar esta publicación.', category='error')
-    
+        flash(['No puedes eliminar esta publicación.'], category='error')
+
     return redirect(url_for('views.home'))
 
 
@@ -198,6 +197,7 @@ def user_list():
 @views.route('/profile/<int:user_id>', methods=['GET'])
 @login_required
 def profile(user_id):
+    playCuakSound = False
     user = User.query.get_or_404(user_id)  # Obtener el usuario o lanzar un error 404
     followers_count = user.followers.count()  # Contar seguidores
     following_count = user.followed.count()  # Contar seguidos
@@ -207,20 +207,22 @@ def profile(user_id):
     is_current_user = (current_user.id == user.id)  # Verificar si es el perfil del usuario actual
     is_following = current_user.id in [follow.follower_id for follow in user.followers]  # Verificar si está siguiendo
 
+    playCuakSound = True
     return render_template('profile.html', user=user, followers_count=followers_count,
                            following_count=following_count, posts=posts,
                            posts_count=posts_count, is_current_user=is_current_user,
-                           is_following=is_following)
+                           is_following=is_following, play_cuak=playCuakSound)
 
 
 @views.route('/edit-profile/<int:user_id>', methods=['GET', 'POST'])
 @login_required
 def edit_profile(user_id):
+    playCuakSound = False
     user = User.query.get_or_404(user_id)
 
     # Verificar si el usuario que intenta editar es el usuario actual
     if user.id != current_user.id:
-        flash('No tienes permiso para editar este perfil.', category='error')
+        flash(['No tienes permiso para editar este perfil.'], category='error')
         return redirect(url_for('views.home'))
 
     # Cargar el perfil del usuario
@@ -263,10 +265,11 @@ def edit_profile(user_id):
         print("Profile Picture:", user.profile_picture)
         print("Background Picture:", profile.background_picture)
 
-        flash('Perfil actualizado correctamente!', category='success')
-        return redirect(url_for('views.profile', user_id=user.id))
+        playCuakSound = True
+        flash(['Perfil actualizado correctamente!'], category='success')
+        return redirect(url_for('views.profile', user_id=user.id, play_cuak=playCuakSound))
 
-    return render_template('edit_profile.html', user=user, profile=profile)
+    return render_template('edit_profile.html', user=user, profile=profile, play_cuak=playCuakSound)
 
 
 
@@ -274,18 +277,20 @@ def edit_profile(user_id):
 @views.route('/like/<int:publication_id>', methods=['POST'])
 @login_required
 def like_publication(publication_id):
+    playCuakSound = False
     publication = Publication.query.get_or_404(publication_id)
     existing_like = Like.query.filter_by(user_id=current_user.id, publication_id=publication.id).first()
 
     if existing_like:
         db.session.delete(existing_like)
         publication.likes_count -= 1
-        flash('Has quitado tu "me gusta".', category='info')
+        flash(['Has quitado tu "me gusta".'], category='info')
     else:
+        playCuakSound = True
         new_like = Like(user_id=current_user.id, publication_id=publication.id)
         db.session.add(new_like)
         publication.likes_count += 1
-        flash('Has dado "me gusta" a la publicación.', category='success')
+        flash(['Has dado "me gusta" a la publicación.'], category='success')
 
     db.session.commit()
     return redirect(request.referrer or url_for('views.home'))
@@ -293,58 +298,160 @@ def like_publication(publication_id):
 @views.route('/like-comment/<int:comment_id>', methods=['POST'])
 @login_required
 def like_comment(comment_id):
+    playCuakSound = False
     comment = Comment.query.get(comment_id)
     if not comment:
-        flash('Comentario no encontrado.', category='error')
+        flash(['Comentario no encontrado.'], category='error')
         return redirect(url_for('views.home'))
 
     like = Like.query.filter_by(user_id=current_user.id, comment_id=comment_id).first()
     if like:
         db.session.delete(like)
-        flash('Me gusta eliminado del comentario', category='success')
+        flash(['Me gusta eliminado del comentario'], category='success')
     else:
         new_like = Like(user_id=current_user.id, comment_id=comment_id)
         db.session.add(new_like)
-        flash('Te gusta el comentario!', category='success')
+        playCuakSound = True
+        flash(['Te gusta el comentario!'], category='success')
 
     db.session.commit()
+    return redirect(url_for('views.home', play_cuak=playCuakSound))
+
+
+@views.route('/post/<int:post_id>', methods=['GET'])
+@login_required
+def view_post(post_id):
+    individual_post = Publication.query.get_or_404(post_id)
+    
+    individual_post.liked = Like.query.filter_by(user_id=current_user.id, publication_id=individual_post.id).first() is not None
+    individual_post.likes_count = Like.query.filter_by(publication_id=individual_post.id).count()
+    
+    individual_post.comments = Comment.query.filter_by(publication_id=individual_post.id).all()
+    for comment in individual_post.comments:
+        comment.liked = Like.query.filter_by(user_id=current_user.id, comment_id=comment.id).first() is not None
+        comment.likes_count = Like.query.filter_by(comment_id=comment.id).count()
+
+
+    return render_template("view_post.html", user=current_user, _publication=individual_post)
+
+
+def send_message(sender_id, receiver_id, content):
+    new_message = Message(sender_id=sender_id, receiver_id=receiver_id, content=content)
+    db.session.add(new_message)
+    db.session.commit()
+
+
+
+
+
+def get_messages(user_id, other_user_id):
+    messages = Message.query.filter(
+        ((Message.sender_id == user_id) & (Message.receiver_id == other_user_id)) |
+        ((Message.sender_id == other_user_id) & (Message.receiver_id == user_id))
+    ).order_by(Message.timestamp).all()
+    return messages
+
+
+
+@views.route('/messages')
+def mensajes():
+    # Obtener los usuarios seguidos por el usuario actual
+    followed_users = User.query.join(Follow, Follow.followed_id == User.id).filter(Follow.follower_id == current_user.id).all()
+
+    # Obtener los mensajes entre el usuario actual y los usuarios seguidos
+    messages = []
+    for user in followed_users:
+        user_messages = get_messages(current_user.id, user.id)  # Obtener mensajes entre el usuario actual y el seguido
+        messages.append((user, user_messages))
+
+    return render_template('messages.html', followed_users=followed_users, messages=messages, user=current_user)
+
+
+@views.route('/get_messages/<int:other_user_id>', methods=['GET'])
+def get_messages_route(other_user_id):
+    user_id = current_user.id  # Asumiendo que estás utilizando Flask-Login
+    messages = get_messages(user_id, other_user_id)
+    
+    # Añadir datos del usuario que envió el mensaje
+    users = {
+        user.id: {'first_name': user.first_name, 'username': user.username}
+        for user in [current_user, User.query.get(other_user_id)]
+    }
+
+    # Retorna los mensajes en formato JSON
+    return jsonify([{
+        'sender_id': message.sender_id,
+        'receiver_id': message.receiver_id,
+        'sender_first_name': users[message.sender_id]['first_name'],
+        'sender_username': users[message.sender_id]['username'],
+        'content': message.content,
+        'timestamp': message.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+    } for message in messages])
+
+
+@views.route('/send_message', methods=['POST'])
+def send_message_route():
+    data = request.get_json()
+    receiver_id = data.get('receiver_id')
+    content = data.get('content')
+    sender_id = current_user.id  # Asumiendo que estás usando Flask-Login
+    
+    send_message(sender_id, receiver_id, content)
+    return jsonify({"message": "Mensaje enviado con éxito"})
+
+
+
+
+@views.route('/edit-publication/<int:publication_id>', methods=['POST'])
+@login_required
+def edit_publication(publication_id):
+    publication = Publication.query.get(publication_id)
+    if publication and publication.user_id == current_user.id:
+        new_content = request.form.get('post')
+        image_url = request.form.get('image_url')
+        video_url = request.form.get('video_url')
+        content_type = request.form.get('content_type')
+        
+        if len(new_content) > 0:
+            publication.data = new_content
+            publication.content_type = content_type
+            publication.image_url = image_url if content_type == 'image' else None
+            publication.video_url = video_url if content_type == 'video' else None
+            db.session.commit()
+            flash(['Publicación editada correctamente!'], category='success')
+        else:
+            flash(['La publicación es muy corta!'], category='error')
+    else:
+        flash(['No tienes permiso para editar esta publicación.'], category='error')
+    
     return redirect(url_for('views.home'))
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-'''''
-# Nueva ruta para ver a quién sigue el usuario
-@views.route('/my-following')
+@views.route('/edit-comment/<int:comment_id>', methods=['POST'])
 @login_required
-def my_following():
-    following_users = current_user.followed.all()
-    return render_template('my_following.html', following=following_users, user=current_user)  # Asegúrate de pasar 'user=current_user'
+def edit_comment(comment_id):
+    # Buscar el comentario en la base de datos por su ID
+    comment = Comment.query.get(comment_id)
+    
+    # Verificar si el comentario existe y si el usuario es el propietario
+    if comment and comment.user_id == current_user.id:
+        # Obtener el nuevo contenido del comentario del formulario
+        new_comment_content = request.form.get('comment')
+        
+        # Verificar si el contenido no está vacío
+        if len(new_comment_content) > 0:
+            # Actualizar el contenido del comentario
+            comment.data = new_comment_content
+            db.session.commit()  # Guardar los cambios en la base de datos
+            
+            # Mostrar un mensaje de éxito
+            flash(['Comentario editado correctamente!'], category='success')
+        else:
+            # Si el comentario está vacío o es demasiado corto
+            flash(['El comentario es muy corto!'], category='error')
+    else:
+        # Si el comentario no existe o el usuario no tiene permisos para editarlo
+        flash(['No tienes permiso para editar este comentario.'], category='error')
 
-# Nueva ruta para ver todos los usuarios
-@views.route('/users')
-@login_required
-def user_list():
-    # Obtener todos los usuarios
-    all_users = User.query.all()
-    # Obtener los IDs de los usuarios que el usuario actual está siguiendo
-    followed_ids = {follow.followed_id for follow in current_user.followed}
-    # Filtrar solo los usuarios que no están siendo seguidos y que no son el usuario actual
-    users = [user for user in all_users if user.id not in followed_ids and user.id != current_user.id]
-    
-    return render_template('user_list.html', users=users, user=current_user)
-    '''''
-    
-    
+    # Redirigir al usuario a la página de inicio o la página de detalle de la publicación
+    return redirect(url_for('views.home'))
+

@@ -100,51 +100,157 @@ function toggleLikeComment(commentId) {
     .catch(error => console.error('Error:', error));
 }
 
+function goToUserProfile(userId) {
+    // Navega al perfil del usuario con el ID correspondiente
+    window.location.href = '/profile/' + userId; // Asegúrate de que la ruta en Flask sea '/profile/<user_id>'
+}
 
-document.addEventListener("DOMContentLoaded", function() {
-    // Cargar publicaciones al cargar la página
-    loadPosts();
+function goToUsersFollowed() {
+    window.location.href = '/my-following';
+}
 
-    // Función para cargar publicaciones
-    function loadPosts() {
-        fetch('/load_posts')
-            .then(response => response.json())
-            .then(posts => {
-                const postsContainer = document.getElementById('posts-container');
-                postsContainer.innerHTML = '';  // Limpiar publicaciones previas
-                posts.forEach(post => {
-                    const postElement = document.createElement('div');
-                    postElement.className = 'post';
-                    postElement.innerHTML = `
-                        <h3>${post.data}</h3>
-                        ${post.image_url ? `<img src="${post.image_url}" alt="Image">` : ''}
-                        ${post.video_url ? `<iframe src="${post.video_url}"></iframe>` : ''}
-                        <p>Publicado por el usuario ${post.user_id} en ${post.date}</p>
-                    `;
-                    postsContainer.appendChild(postElement);
-                });
-            })
-            .catch(error => console.error('Error al cargar publicaciones:', error));
+
+function logoutUser(userId) {
+    // Navega al perfil del usuario con el ID correspondiente
+    window.location.href = '/logout'; // Asegúrate de que la ruta en Flask sea '/profile/<user_id>'
+}
+
+function gotoSignUp(userId) {
+    // Navega al perfil del usuario con el ID correspondiente
+    window.location.href = '/sign-up'; // Asegúrate de que la ruta en Flask sea '/profile/<user_id>'
+}
+  
+
+function toggleComments(postId) {
+    var commentsSection = document.getElementById('comments-' + postId);
+    var toggleArrow = document.getElementById('toggleArrow-' + postId);
+    var toggleText = document.getElementById('toggleText-' + postId);
+
+    // Toggle visibilidad
+    if (commentsSection.style.display === 'none' || commentsSection.style.display === '') {
+        commentsSection.style.display = 'block';
+        toggleArrow.classList.remove('fa-arrow-down');
+        toggleArrow.classList.add('fa-arrow-up');
+        toggleText.textContent = 'Ocultar Hilo';  // Cambia el texto a 'Ocultar Hilo'
+    } else {
+        commentsSection.style.display = 'none';
+        toggleArrow.classList.remove('fa-arrow-up');
+        toggleArrow.classList.add('fa-arrow-down');
+        toggleText.textContent = 'Ver Hilo';  // Cambia el texto a 'Ver Hilo'
     }
+}
 
-    // Función para agregar una nueva publicación
-    document.getElementById('post-form').addEventListener('submit', function(event) {
-        event.preventDefault();  // Prevenir recarga
-        const formData = new FormData(this);
-        
-        fetch('/add_post', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert(data.message);
-                loadPosts();  // Volver a cargar las publicaciones
-            } else {
-                alert(data.message);
-            }
-        })
-        .catch(error => console.error('Error al agregar publicación:', error));
-    });
-});
+
+
+function toggleEditUrlFields(postId) {
+    var contentType = document.getElementById("editContentType-" + postId).value;
+    document.getElementById("editImageUrlField-" + postId).style.display = (contentType === 'image') ? 'block' : 'none';
+    document.getElementById("editVideoUrlField-" + postId).style.display = (contentType === 'video') ? 'block' : 'none';
+  }
+
+  /*
+
+  function openEditPostModal(postId, content, imageUrl, videoUrl, contentType) {
+    document.getElementById("editPostModal").style.display = "block";
+    document.getElementById("editPostContent").value = JSON.parse(content);
+    document.getElementById("editImageUrl").value = imageUrl || "";
+    document.getElementById("editVideoUrl").value = videoUrl || "";
+    document.getElementById("editContentType").value = contentType;
+    toggleEditUrlFields();
+  }
+  */
+
+  function openEditPostModal(postId, data, imageUrl = '', videoUrl = '', contentType = 'text') {
+    // Encuentra y muestra el contenedor del formulario de edición específico
+    var editContainer = document.getElementById("editPostContainer-" + postId);
+    editContainer.style.display = "block";
+    
+    // Rellena los campos del formulario con los datos actuales de la publicación
+    document.getElementById("editPostContent-" + postId).value = data;
+    document.getElementById("editContentType-" + postId).value = contentType;
+  
+    // Muestra y oculta los campos de URL según el tipo de contenido
+    toggleEditUrlFields(postId);
+  
+    if (contentType === 'image') {
+      document.getElementById("editImageUrl-" + postId).value = imageUrl;
+    } else if (contentType === 'video') {
+      document.getElementById("editVideoUrl-" + postId).value = videoUrl;
+    }
+  }
+
+
+
+
+function openEditCommentModal(commentId, commentData) {
+    var modal = document.getElementById("editCommentModal-" + commentId);
+    var textarea = document.getElementById("editCommentContent-" + commentId);
+    textarea.value = commentData;
+    modal.style.display = "block";
+  }
+  
+
+  function closeEditPostModal(postId) {
+    var editContainer = document.getElementById("editPostContainer-" + postId);
+    editContainer.style.display = "none";
+  }
+  
+  function closeEditCommentModal(commentId) {
+    var modal = document.getElementById("editCommentModal-" + commentId);
+    modal.style.display = "none";
+  }
+
+
+  /*
+  function playCuakSound() {
+    // Obtener el elemento de audio
+    var cuakSound = document.getElementById('cuakSound');
+    
+    // Reproducir el sonido
+    cuakSound.play();
+  }
+*/
+/*
+//  function playCuakThenSubmit() {
+function playCuakSound() {
+    var cuakSound = document.getElementById('cuakSound');
+
+    // Reproducir el sonido
+    cuakSound.play();
+
+    // Esperar un momento antes de enviar el formulario
+    setTimeout(function() {
+      // Aquí puedes hacer el envío del formulario o redirigir a otra página
+      document.forms[0].submit(); // Enviar el primer formulario en la página
+    }, 500); // 500 ms de retraso para permitir que el sonido se reproduzca primero
+  }*/
+
+  function playCuakSound(event) {
+    event.preventDefault(); // Evita el envío inmediato del formulario
+
+    // Obtener el formulario
+    var form = document.forms[0];
+
+    // Verificar si el formulario es válido
+    if (form.checkValidity()) {
+      // Reproducir el sonido
+      var cuakSound = document.getElementById('cuakSound');
+      cuakSound.play();
+
+      // Esperar un poco para que el sonido se reproduzca antes de enviar
+      setTimeout(function() {
+        form.submit(); // Enviar el formulario
+      }, 500); // 500 ms de retraso para permitir que el sonido se reproduzca primero
+    } else {
+      // Si el formulario no es válido, puedes mostrar un mensaje o manejar el error
+      alert('Por favor, completa todos los campos correctamente.');
+    }
+  }
+
+  function forcePlayCuakSound() {
+    // Obtener el elemento de audio
+    var cuakSound = document.getElementById('cuakSound');
+    // Reproducir el sonido
+    cuakSound.play();
+
+  }

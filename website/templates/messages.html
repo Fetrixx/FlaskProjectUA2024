@@ -1,0 +1,302 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="overflow-auto">
+    <div class="message-container">
+        <!-- Sidebar de usuarios que sigues -->
+        <div class="user-list">
+            <h3>Usuarios</h3>
+            <ul class="mt-2" style="gap: 10px">
+                {% for user in followed_users %}
+                <li >
+                    <a href="#" class="user" data-user-id="{{ user.id }}" onclick="loadMessages({{ user.id }})">
+                        {{ user.first_name }}
+                        <span style="font-size: 14px; font-style:italic; font-weight:lighter;">
+                            @{{ user.username }}
+                        </span>
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    
+        <!-- Ventana de mensajes -->
+        <div class="message-area">
+            <div class="message-header">
+                <h4 id="conversation-user-name">Selecciona un usuario para ver el chat</h4>
+            </div>
+    
+            <div class="message-history" id="message-history">
+                <!-- Los mensajes se cargarán aquí dinámicamente -->
+            </div>
+    
+            <!-- Área de entrada de mensajes, oculta inicialmente -->
+            <div class="message-input" style="display: none;">
+                <textarea id="message-content" placeholder="Escribe un mensaje..." rows="2" style="width:calc(100%-80px)"></textarea>
+                <span class="d-flex align-self-center">
+                    <button style="width: 60px; margin-left:20px" id="send-message-btn" onclick="sendMessage()">
+                        <i class="fa-regular fa-paper-plane"></i>
+                    </button>
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function formatDate(date) {
+        // Obtener componentes de la fecha
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0'); // Los meses son 0-indexados
+        const year = date.getFullYear();
+        
+        // Obtener componentes de la hora
+        let hours = date.getHours();
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        
+        // Convertir a formato 12 horas
+        hours = hours % 12;
+        hours = hours ? String(hours).padStart(2, '0') : '12'; // El cero se convierte a 12
+        
+        return `${day}/${month}/${year} ${hours}:${minutes} ${ampm}`;
+    }
+
+    function loadMessages(userId) {
+        // Cambia el nombre del usuario en el header
+        const userName = document.querySelector(`.user[data-user-id="${userId}"]`).textContent;
+        document.getElementById('conversation-user-name').textContent = `Conversación con ${userName}`;
+    
+        // Marca al usuario como seleccionado
+        document.querySelectorAll('.user').forEach(user => {
+            user.classList.remove('selected');
+        });
+        document.querySelector(`.user[data-user-id="${userId}"]`).classList.add('selected');
+    
+        // Llama a la API para obtener los mensajes
+        fetch(`/get_messages/${userId}`)
+            .then(response => response.json())
+            .then(data => {
+                let messageHistory = document.getElementById('message-history');
+                messageHistory.innerHTML = ''; // Limpia el historial antes de mostrar los nuevos mensajes
+    
+                data.forEach(message => {
+                    // Solo mostrar los mensajes que no han sido eliminados
+                    if (!message.is_deleted) {
+                        const messageElement = document.createElement('div');
+    
+                        // Crear un contenedor div para alinear los mensajes
+                        const messageContent = document.createElement('div');
+                        
+                        // Mostrar el nombre y username del usuario
+                        const senderName = document.createElement('span');
+                        senderName.classList.add('sender-name');
+                        senderName.textContent = `${message.sender_first_name} - @${message.sender_username}: `;
+        
+                        // Reemplazar saltos de línea con <br> para preservar el formato
+                        messageContent.innerHTML = message.content.replace(/\n/g, '<br>'); // Reemplazar saltos de línea por <br>
+
+                        // Crear un elemento para la fecha y hora
+                        const timestamp = document.createElement('span');
+                        timestamp.classList.add('timestamp'); // Clase para aplicar estilos si es necesario
+                        const date = new Date(message.timestamp); // Convertir a objeto Date
+                        timestamp.textContent = formatDate(date); // Usar la función formatDate
+    
+                        // Agregar el nombre, contenido del mensaje y timestamp al elemento
+                        messageElement.appendChild(senderName);
+                        messageElement.appendChild(messageContent);
+                        messageElement.appendChild(timestamp); // Agregar timestamp
+    
+                        // Verifica quién envió el mensaje y asigna la clase apropiada
+                        if (message.sender_id === {{ current_user.id }}) {
+                            messageContent.classList.add('mine');
+                            messageElement.style.textAlign = 'right';  // Alinea el mensaje y nombre a la derecha
+                        } else {
+                            messageContent.classList.add('theirs');
+                            messageElement.style.textAlign = 'left';  // Alinea el mensaje y nombre a la izquierda
+                        }
+    
+                        messageHistory.appendChild(messageElement);
+                    }
+                });
+    
+                // Mostrar el área de entrada de mensajes solo si hay un usuario seleccionado
+                document.querySelector('.message-input').style.display = 'flex';
+            })
+            .catch(error => console.error('Error al cargar los mensajes:', error));
+    }
+    
+    function sendMessage() {
+        const messageContent = document.getElementById('message-content').value;
+        const receiverId = document.querySelector('.user.selected').dataset.userId;
+    
+        if (!messageContent.trim()) {
+            return; // No enviar mensaje vacío
+        }
+    
+        fetch('/send_message', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                receiver_id: receiverId,
+                content: messageContent
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message === "Mensaje enviado con éxito") {
+                loadMessages(receiverId); // Recargar los mensajes
+                document.getElementById('message-content').value = ''; // Limpiar el cuadro de texto
+            }
+        })
+        .catch(error => console.error('Error al enviar el mensaje:', error));
+    }
+</script>
+
+<style>
+    .message-container {
+        min-width: 500px;
+        display: flex;
+        height: 80vh;
+    }
+    
+    /* Sidebar de usuarios */
+    .user-list {
+        width: 250px;
+        padding: 10px;
+        background-color: #f4f4f4;
+        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    }
+    
+    .user-list ul {
+        list-style-type: none;
+        padding: 0;
+    }
+    
+    .user-list li {
+        margin-bottom: 10px;
+    }
+    
+    .user-list .user {
+        text-decoration: none;
+        color: #333;
+        font-weight: bold;
+    }
+    
+    .user-list .user:hover {
+        color: #007bff;
+    }
+    
+    /* Ventana de mensajes */
+    .message-area {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        padding: 20px;
+    }
+    
+    /* Cabecera */
+    .message-header {
+        margin-bottom: 20px;
+    }
+    
+    /* Historial de mensajes */
+    .message-history {
+        flex-grow: 1;
+        overflow-y: auto;
+        margin-bottom: 20px;
+    }
+    
+    /* Estilo para los mensajes */
+    .message {
+        max-width: 70%;
+        margin-bottom: 10px;
+        padding: 10px;
+        border-radius: 20px;
+        word-wrap: break-word;
+        background-color: #f0f0f0;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Estilo para los mensajes enviados */
+    .mine {
+        display: flex;
+        justify-content: flex-end;  /* Alinea a la derecha */
+        margin-left: auto;
+        background-color: #e1ffe1;
+        padding: 10px;
+        border-radius: 20px;
+        max-width: 70%;
+        width: fit-content;
+        word-wrap: break-word;
+        /* margin-bottom: 10px; */
+    }
+    
+    /* Estilo para los mensajes recibidos */
+    .theirs {
+        display: flex;
+        justify-content: flex-start; /* Alinea a la izquierda */
+        background-color: #f0f0f0;
+        padding: 10px;
+        border-radius: 20px;
+        max-width: 70%;
+        width: fit-content;
+        word-wrap: break-word;
+        /* margin-bottom: 10px; */
+    }
+    
+    /* Nombre del remitente */
+    .sender-name {
+        font-weight: bold;
+        color: #007bff;
+        margin-right: 5px;
+    }
+    
+    /* Estilo del área de entrada de mensaje */
+    .message-input {
+        display: flex;
+        flex-direction: row;
+    }
+    
+    .message-input textarea {
+        
+        width: 100%;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 10px;
+        resize: none;
+    }
+    
+    .message-input button {
+        align-self: flex-end;
+        padding: 10px 20px;
+        border: none;
+        background-color: #007bff;
+        color: white;
+        border-radius: 5px;
+    }
+
+    .timestamp {
+        font-size: 0.8em; /* Tamaño más pequeño */
+        color: gray; /* Color gris */
+        margin-left: 10px; /* Espacio a la izquierda */
+        margin-bottom: 20px;
+    }
+
+    /* Estilo para los mensajes */
+    .message {
+        max-width: 70%;
+        margin-bottom: 10px;
+        padding: 10px;
+        border-radius: 20px;
+        word-wrap: break-word;
+        background-color: #f0f0f0;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        white-space: pre-wrap; /* Respetar los saltos de línea */
+    }
+
+</style>
+
+{% endblock %}

@@ -3,7 +3,7 @@
 {% block title %}Usuarios que Sigues{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
+<div class=" mt-4">
     <h1>Usuarios que Sigues</h1>
 
     <span>
@@ -26,18 +26,20 @@
                 <div class="mb-3">
                     <div class="card d-flex flex-row justify-content-center align-items-center">
                         <div style="margin: 20px;">
-                          {% if follow.followed_user.profile_picture %}
-                            <img src="{{ follow.followed_user.profile_picture }}" class="card-img-top" alt="{{ follow.followed_user.first_name }}"
-                                style="width: 100px; height: 100px; border-radius: 50%;">
-                          {% else %}
-                            <img src="{{ url_for('static', filename='images/user-placeholder.jpg') }}" class="card-img-top" alt="{{ follow.followed_user.first_name }}"
-                                style="width: 100px; height: 100px; border-radius: 50%;">
-                          {% endif %}
+                            <a href="{{ url_for('views.profile', user_id=follow.followed_user.id) }}">
+                                {% if follow.followed_user.profile_picture %}
+                                    <img src="{{ follow.followed_user.profile_picture }}" class="card-img-top" alt="{{ follow.followed_user.first_name }}"
+                                        style="width: 100px; height: 100px; border-radius: 50%;">
+                                {% else %}
+                                    <img src="{{ url_for('static', filename='images/user-placeholder.jpg') }}" class="card-img-top" alt="{{ follow.followed_user.first_name }}"
+                                        style="width: 100px; height: 100px; border-radius: 50%;">
+                                {% endif %}
+                            </a>
                         </div>
 
                         <div class="card-body">
                             <h4 class="card-title d-inline-flex justify-content-start align-items-center">
-                              <span>
+                                <span id="userName" style="cursor: pointer;" onclick="goToUserProfile('{{ follow.followed_user.id }}')">
                                 {{ follow.followed_user.first_name }}
                                 <span class="username">
                                     @{{ follow.followed_user.username }} 

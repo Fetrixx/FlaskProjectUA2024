@@ -24,7 +24,7 @@
   </div>
 
   <br />
-  <div class="d-flex flex-row justify-content-between align-items-center">
+  <div class="d-flex flex-row justify-content-between align-items-start">
     <div class="form-group">
       <label for="content_type">Tipo de Publicación:</label>
       <select name="content_type" id="content_type" class="form-control" required onchange="toggleUrlFields()">
@@ -33,19 +33,28 @@
         <option value="video">Video</option>
       </select>
     </div>
-    <button type="submit" class="btn btn-primary">
-      <i class="fas fa-paper-plane"></i> <!-- Ícono de enviar -->
-    </button>
+    <span>
+      <button type="submit" class="btn btn-primary" onclick="playCuakSound($event)">
+        <i class="fas fa-paper-plane"></i> <!-- Ícono de enviar -->
+      </button>
+      <!--
+      <button class="btn btn-secondary" onclick="forcePlayCuakSound()">
+        cuak
+      </button>
+      -->
+    </span>
   </div>
 </form>
 
 
 <!-- Todas las Publicaciones -->
 <h2>Todas las Publicaciones</h2>
-<div class="list-group">
-  {% for post in posts %}
-    {{ post_macros.render_publications(post, current_user) }}
-  {% endfor %}
+<div class="overflow-auto">
+  <div class="list-group over" style="min-width: fit-content;">
+    {% for post in posts %}
+      {{ post_macros.render_publications(post, current_user) }}
+    {% endfor %}
+  </div>
 </div>
 
 {% endblock %}
