@@ -1,0 +1,180 @@
+body {
+    background-color: #f8f9fa;
+}
+
+.card {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+}
+
+.list-group-item {
+    border: none;
+    padding: 15px;
+}
+
+.list-group-item:hover {
+    background-color: #f1f1f1;
+}
+
+h2 {
+    margin-top: 30px;
+}
+
+
+
+
+/* styles.css */
+
+.navbar {
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+}
+
+.navbar-nav .nav-item .nav-link {
+    padding: 15px 20px; /* Espaciado interno */
+}
+
+.navbar-nav .nav-item .nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.1); /* Efecto hover */
+}
+
+.dropdown-toggle::after {
+    display: none; /* Ocultar el ícono por defecto del menú desplegable */
+}
+
+.dropdown-menu {
+    min-width: 200px; /* Ancho mínimo del menú desplegable */
+}
+
+.alert {
+    margin-bottom: 20px; /* Espaciado inferior para las alertas */
+}
+
+/* styles.css */
+
+.list-group-item {
+    border: none; /* Sin borde */
+    padding: 15px; /* Espaciado interno */
+}
+
+.media {
+    display: flex;
+    align-items: flex-start; /* Alinear la imagen y el texto */
+}
+
+.media img {
+    margin-right: 15px; /* Espaciado entre la imagen y el texto */
+}
+
+.media-body {
+    background-color: #f8f9fa; /* Fondo claro para las publicaciones */
+    border-radius: 5px; /* Bordes redondeados */
+    padding: 10px; /* Espaciado interno */
+}
+
+h2 {
+    margin-top: 30px; /* Espaciado superior para los encabezados */
+}
+
+.reply-form {
+    display: none; /* Oculta el formulario por defecto */
+}
+
+.hidden {
+    display: none;
+}
+
+/* Estilo para el primer comentario (anidado del post) */
+.comment-root {
+    margin-top: 15px; /* Espaciado superior para el primer comentario */
+    padding-left: 10px; /* Espaciado a la izquierda */
+    border-left: 3px solid #007bff; /* Línea a la izquierda para indicar anidación */
+    background-color: #f1f1f1; /* Fondo claro para diferenciarlo */
+}
+
+/* Estilo para los comentarios anidados */
+.reply-form {
+    margin-top: 10px; /* Espaciado superior para el formulario de respuesta */
+}
+
+.media {
+    margin-bottom: 10px; /* Espaciado entre comentarios */
+}
+
+.container {
+    height: 80vh;
+    /* max-width: 1000px; */
+}
+
+
+.responsive-video {
+    position: relative;
+    padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+    height: 0; /* Height is set to zero to maintain aspect ratio */
+    overflow: hidden; /* Hides anything that overflows the container */
+}
+
+.responsive-video iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%; /* Make the iframe take up the full width */
+    height: 100%; /* Make the iframe take up the full height */
+    border: none; /* Remove default border */
+}
+
+.username {
+    font-size: 14px;
+    font-style:italic;
+    font-weight:lighter;
+}
+
+.userProfileData {
+    margin-top: 80px;
+}
+
+.userProfileCard {
+    margin: 20px;
+}
+
+@media (max-width: 700px) {
+    .userProfileData {
+        margin-top: 10px;
+        padding: 10px !important;
+    }
+
+    .userProfileCard {
+        margin: 0;
+    }
+    
+}
+
+/* Estilos personalizados para formularios */
+.custom-form {
+    width: 100%;
+    max-width: 400px;
+    background-color: #ffffff; /* Fondo blanco para el formulario */
+    border-radius: 8px; /* Bordes redondeados */
+    padding: 20px; /* Espaciado interno */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Sombra sutil */
+}
+
+.custom-form .form-group label {
+    font-weight: bold; /* Negrita para las etiquetas */
+}
+
+.custom-form .btn-primary {
+    width: 100%; /* Botón ocupa todo el ancho */
+}
+
+.custom-form .alert {
+    margin-top: 20px; /* Espacio superior para las alertas */
+}
+
+.post-content {
+    white-space: pre-wrap; /* Conserva saltos de línea y espacios */
+    font-family: inherit;  /* Usa la fuente del contenedor */
+    font-size: inherit;    /* Usa el tamaño de fuente del contenedor */
+    line-height: inherit;  /* Mantiene la altura de línea original */
+    color: inherit;        /* Conserva el color de texto */
+  }
+  

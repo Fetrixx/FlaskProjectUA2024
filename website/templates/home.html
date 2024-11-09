@@ -1,27 +1,60 @@
-{% extends "base.html" %} 
+{% extends "base.html" %}
 
-{% block title %} Inicio {% endblock %} 
+{% import "post_macros.html" as post_macros %}
+
+{% block title %} Inicio {% endblock %}
 
 {% block content %}
 
-<h1 align="center">Notas</h1>
-<ul class="list-group list-group-flush" id="notes">
-  {% for note in user.notes %}
-  <li class="list-group-item">
-    {{ note.data }}
-    <button type="button" class="close" onclick="deleteNote({{note.id}})"> <!-- onClick="deleteNote({{ note.id }})"-->
-      <span aria-hidden="true">&times;</span>
-    </button>
-  </li>
-  {% endfor %}
-</ul>
+<h1 align="center">Publicaciones</h1>
 
-<form method="POST">
-  <textarea name="note" id="note" class="form-control"></textarea>
+<!-- Formulario para agregar una nueva publicación -->
+<form method="POST" class="mb-4">
+
+  <textarea name="post" id="post" class="form-control" placeholder="¿Qué estás pensando?" required></textarea>
+  
+  <div class="form-group mt-3" id="image_url_field" style="display: none;">
+    <label for="image_url">URL de Imagen:</label>
+    <input type="text" name="image_url" id="image_url" class="form-control" placeholder="Ingresa la URL de la imagen">
+  </div>
+
+  <div class="form-group mt-3" id="video_url_field" style="display: none;">
+    <label for="video_url">URL de Video:</label>
+    <input type="text" name="video_url" id="video_url" class="form-control" placeholder="Ingresa la URL del video">
+  </div>
+
   <br />
-  <div align="center">
-    <button type="submit" class="btn btn-primary">Agregar Nota</button>
+  <div class="d-flex flex-row justify-content-between align-items-start">
+    <div class="form-group">
+      <label for="content_type">Tipo de Publicación:</label>
+      <select name="content_type" id="content_type" class="form-control" required onchange="toggleUrlFields()">
+        <option value="text">Texto</option>
+        <option value="image">Imagen</option>
+        <option value="video">Video</option>
+      </select>
+    </div>
+    <span>
+      <button type="submit" class="btn btn-primary" onclick="playCuakSound($event)">
+        <i class="fas fa-paper-plane"></i> <!-- Ícono de enviar -->
+      </button>
+      <!--
+      <button class="btn btn-secondary" onclick="forcePlayCuakSound()">
+        cuak
+      </button>
+      -->
+    </span>
   </div>
 </form>
+
+
+<!-- Todas las Publicaciones -->
+<h2>Todas las Publicaciones</h2>
+<div class="overflow-auto">
+  <div class="list-group over" style="min-width: fit-content;">
+    {% for post in posts %}
+      {{ post_macros.render_publications(post, current_user) }}
+    {% endfor %}
+  </div>
+</div>
 
 {% endblock %}

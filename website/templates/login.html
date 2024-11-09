@@ -1,32 +1,54 @@
 {% extends "base.html" %}
 
-{% block title %} Iniciar Sesion {% endblock %} 
+{% block title %}Iniciar Sesión{% endblock %}
 
 {% block content %}
+<div class="mt-4 d-flex justify-content-center align-items-center flex-column h-100"  style="min-height: fit-content;">
+    <!-- Logo y Nombre de la Aplicación -->
+    <a class="navbar-brand p-0" href="/">
+        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo"
+         style="width: 100px; height: 100px; background-color:whitesmoke; border-radius: 100px;"
+         class="m-3">
+        Cuak
+    </a>
+    <h3 class="text-center">Iniciar Sesión</h3>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message[0] }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <form method="POST" class="custom-form">
+        <div class="form-group">
+            <label for="email">Correo:</label>
+            <input type="email"
+                   class="form-control"
+                   id="email"
+                   name="email"
+                   placeholder="Ingrese su correo..."
+                   required />
+        </div>
 
-<form method="POST">
-  <h3 align="center">Iniciar Sesion</h3>
-  <div class="form-group">
-    <label for="email">Correo:</label>
-    <input
-      type="email"
-      class="form-control"
-      id="email"
-      name="email"
-      placeholder="Ingrese su correo..."
-    />
-  </div>
-  <div class="form-group">
-    <label for="password">Contraseña</label>
-    <input
-      type="password"
-      class="form-control"
-      id="password"
-      name="password"
-      placeholder="Ingrese su Contraseña"
-    />
-  </div>
-  <br />
-  <button type="submit" class="btn btn-primary">Iniciar Sesion</button>
-</form>
+        <div class="form-group">
+            <label for="password">Contraseña:</label>
+            <input type="password"
+                   class="form-control"
+                   id="password"
+                   name="password"
+                   placeholder="Ingrese su contraseña"
+                   required />
+        </div>
+
+        <div class="d-flex flex-column justify-content-center mt-4" style="gap: 10px">
+            <button type="submit" class="btn btn-primary">Iniciar Sesión</button>
+            <a href="{{ url_for('auth.sign_up') }}" class="btn btn-link w-100">
+                Registrarse
+            </a>
+        </div>
+
+    </form>
+</div>
 {% endblock %}

@@ -1,0 +1,235 @@
+{% macro render_publications(post, current_user) %}
+<div class="list-group-item">
+  <div class="media">
+    <span style="width: min-content;" class="d-inline-flex flex-column justify-content-between">
+      <a href="{{ url_for('views.profile', user_id=post.user.id) }}">
+        <img src="{{ post.user.profile_picture }}" alt="{{ post.user.first_name }}" class="mr-3 rounded-circle"
+          style="width: 50px; height: 50px;">
+      </a>
+
+      <!-- Flecha de toggle para comentarios -->
+      <button class="btn btn-link toggle-comments-btn px-0 mr-3" onclick="toggleComments({{ post.id }})">
+        <span id="toggleText-{{ post.id }}">Ocultar Hilo</span> <!-- Texto inicial en "Ocultar Hilo" -->
+        <i class="fa fa-arrow-up" id="toggleArrow-{{ post.id }}"></i> <!-- Flecha hacia arriba por defecto -->
+      </button>
+    </span>
+
+    <span class="w-100 d-flex flex-column justify-content-start align-items-center">
+      <div class="media-body w-100 d-inline-flex flex-column">
+        <h5 class="mt-0 d-inline-flex justify-content-between">
+          <span id="userName" style="cursor: pointer;" onclick="goToUserProfile('{{ post.user.id }}')">
+            {{ post.user.first_name }}
+            <span style="font-size: 14px; font-style:italic; font-weight:lighter;">
+              @{{ post.user.username }}
+            </span>
+
+            <!-- Enlace para ver la publicación individual -->
+            <a href="{{ url_for('views.view_post', post_id=post.id) }}" class="btn btn-link d-none d-md-inline">
+              <i class="fa-brands fa-readme"></i>
+              Ver publicación
+            </a>
+          </span>
+    </span>
+    <small style="font-size: 12px;" class="text-muted d-inline-flex align-items-baseline">
+      {{ post.date.strftime('%d-%m-%Y %I:%M:%S %p') }}
+      <form method="POST" action="{{ url_for('views.delete_publication', publication_id=post.id) }}"
+        style="display:inline;">
+        <button type="submit" class="btn btn-link text-danger delete-comment-btn"
+          onclick="return confirmDelete(event);">
+          <i class="fas fa-trash-alt"></i>
+        </button>
+      </form>
+      <span class="d-inline">
+        {% if post.user_id == current_user.id %}
+        <button class="btn btn-link" onclick="openEditPostModal(
+                  {{ post.id }},
+                  '{{ post.data.replace("'", "\\'").replace('"', ' \\"').replace('\n', '\\n' ).replace('\r', '' )
+          }}', '{{ (post.image_url or "").replace("'", " \\'") }}', '{{ (post.video_url or "").replace("'", " \\'")
+          }}', '{{ post.content_type.replace("'", " \\'") }}' )">
+          <i class="fa-solid fa-pen-to-square"></i>
+        </button>
+        {% endif %}
+      </span>
+    </small>
+
+    </h5>
+    <span>
+      {% if post.content_type == 'image' and post.image_url %}
+      <img src="{{ post.image_url }}" alt="" class="img-fluid mt-2">
+      {% elif post.content_type == 'video' and post.video_url %}
+      <div class="responsive-video">
+        <iframe src="{{ post.video_url }}" frameborder="0" allowfullscreen></iframe>
+      </div>
+      {% endif %}
+
+    </span>
+    <div class="post-content">{{ post.data }}</div>
+  </div>
+
+  <!-- Botones de "Me gusta" y comentario -->
+  <span class="d-flex justify-content-start align-items-center w-100">
+    <form method="POST" action="{{ url_for('views.like_publication', publication_id=post.id) }}" class="d-inline-flex">
+      <button type="submit" class="btn btn-link text-primary">
+        <i class="fas fa-thumbs-up" style="color: {{ 'blue' if post.liked else 'lightgray' }};"></i>
+        {{ post.likes_count }}
+      </button>
+    </form>
+    <button onclick="toggleCommentForm({{ post.id }})" class="btn btn-link">
+      <i class="fa-solid fa-comment"></i> {{ post.comments|length }}
+    </button>
+
+
+    <!-- Enlace para ver la publicación individual -->
+    <a href="{{ url_for('views.view_post', post_id=post.id) }}" class="btn btn-link d-inline d-md-none">
+      <i class="fa-brands fa-readme"></i>
+      Ver publicación
+    </a>
+
+  </span>
+
+  <!-- Formulario comentarar -->
+  <div id="commentForm-{{ post.id }}" style="display:none;" class="comment-form mb-3 w-100">
+    <form method="POST" action="{{ url_for('views.comment', publication_id=post.id) }}">
+      <textarea name="comment" class="form-control" placeholder="Escribe un comentario..." required></textarea>
+      <span class="d-flex justify-content-end align-items-center">
+        <button type="submit" class="btn btn-primary mt-2"><i class="fas fa-paper-plane"></i></button>
+      </span>
+    </form>
+  </div>
+  <!-- Formulario editar Publicacion -->
+  <div id="editPostContainer-{{ post.id }}" style="display: none; width: 100%;">
+    <form id="editPostForm-{{ post.id }}" method="POST" class="mb-4"
+      action="{{ url_for('views.edit_publication', publication_id=post.id) }}">
+      <textarea name="post" id="editPostContent-{{ post.id }}" class="form-control" placeholder="¿Qué estás pensando?"
+        required></textarea>
+
+      <div class="form-group mt-3" id="editImageUrlField-{{ post.id }}" style="display: none;">
+        <label for="editImageUrl">URL de Imagen:</label>
+        <input type="text" name="image_url" id="editImageUrl-{{ post.id }}" class="form-control"
+          placeholder="Ingresa la URL de la imagen">
+      </div>
+
+      <div class="form-group mt-3" id="editVideoUrlField-{{ post.id }}" style="display: none;">
+        <label for="editVideoUrl">URL de Video:</label>
+        <input type="text" name="video_url" id="editVideoUrl-{{ post.id }}" class="form-control"
+          placeholder="Ingresa la URL del video">
+      </div>
+
+      <div class="d-flex flex-row justify-content-between align-items-start mt-3">
+        <div class="form-group">
+          <label for="editContentType">Tipo de Publicación:</label>
+          <select name="content_type" id="editContentType-{{ post.id }}" class="form-control" required
+            onchange="toggleEditUrlFields({{ post.id }})">
+            <option value="text">Texto</option>
+            <option value="image">Imagen</option>
+            <option value="video">Video</option>
+          </select>
+        </div>
+        <span>
+          <button type="button" class="btn btn-secondary" onclick="closeEditPostModal({{ post.id }})">Cancelar</button>
+          <button type="submit" class="btn btn-primary">
+            <i class="fas fa-paper-plane"></i> Guardar cambios
+          </button>
+        </span>
+      </div>
+    </form>
+  </div>
+  </span>
+</div>
+
+<!-- Comentarios -->
+<div class="comments" id="comments-{{ post.id }}" style="display:block;">
+  {% for comment in post.comments if not comment.parent_id %}
+  {{ comment_block(comment, current_user) }}
+  {% endfor %}
+</div>
+</div>
+{% endmacro %}
+
+
+{% macro comment_block(comment, current_user, level=0) %}
+<div class="media comment-root py-0 my-0">
+  <a href="{{ url_for('views.profile', user_id=comment.user.id) }}">
+    <img src="{{ comment.user.profile_picture }}" alt="{{ comment.user.first_name }}" class="mr-3 mt-3 rounded-circle"
+      style="width: 30px; height: 30px;">
+  </a>
+  <div class="media-body pb-0">
+    <span class="d-flex justify-content-between align-items-center">
+      <h6 class="d-inline-flex justify-content-between">
+        <span id="userName" style="cursor: pointer;" onclick="goToUserProfile('{{ comment.user.id }}')">
+          {{ comment.user.first_name }}
+          <span style="font-size: 14px; font-style:italic; font-weight:lighter;">
+            @{{ comment.user.username }}
+          </span>
+        </span>
+      </h6>
+      <small style="font-size: 12px;" class="text-muted">{{ comment.date.strftime('%d-%m-%Y %I:%M:%S %p') }}</small>
+    </span>
+    <div class="d-flex justify-content-between align-items-center">
+      <div class="post-content">{{ comment.data }}</div>
+
+
+      <span class="d-flex flex-row">
+        <!-- Botón de "Me gusta" para el comentario -->
+        <form method="POST" action="{{ url_for('views.like_comment', comment_id=comment.id) }}" class="d-inline-flex">
+          <button type="submit" class="btn btn-link text-primary">
+            <i class="fas fa-thumbs-up" style="color: {{ 'blue' if comment.liked else 'lightgray' }};"></i>
+            {{ comment.likes_count }}
+          </button>
+        </form>
+        <!-- Botón de "Eliminar" si el usuario realizo el comentario -->
+        <button onclick="toggleReplyForm({{ comment.id }})" class="btn btn-link reply-btn"><i
+            class="fa-solid fa-reply"></i></button>
+        {% if comment.user_id == current_user.id %}
+        <form method="POST" action="{{ url_for('views.delete_comment', comment_id=comment.id) }}"
+          style="display:inline;">
+          <button type="submit" class="btn btn-link text-danger delete-comment-btn"
+            onclick="return confirmDelete(event);"><i class="fas fa-trash-alt"></i></button>
+        </form>
+
+        <span class="d-inline">
+          <button class="btn btn-link" onclick="openEditCommentModal(
+            {{ comment.id }},
+            '{{ comment.data.replace("'", "\\'").replace('"', ' \\"').replace('\n', '\\n' ).replace('\r', '' ) }}' )">
+            <i class="fa-solid fa-pen-to-square"></i>
+          </button>
+        </span>
+        {% endif %}
+      </span>
+    </div>
+
+    <!-- Formulario de respuesta -->
+    <div id="replyForm-{{ comment.id }}" style="display:none;" class="reply-form mt-2">
+      <form method="POST" action="{{ url_for('views.comment', publication_id=comment.publication_id) }}">
+        <input type="hidden" name="parent_id" value="{{ comment.id }}">
+        <textarea name="comment" class="form-control mt-2" placeholder="Escribe tu respuesta..." required></textarea>
+        <span class="d-flex justify-content-end align-items-center">
+          <button type="submit" class="btn btn-primary mt-2"><i class="fas fa-paper-plane"></i></button>
+        </span>
+      </form>
+    </div>
+    <!-- Formulario editar respuesta -->
+    <div id="editCommentModal-{{ comment.id }}" style="display: none;" class="edit-comment-modal mt-2">
+      <form id="editCommentForm-{{ comment.id }}" method="POST" action="{{ url_for('views.edit_comment', comment_id=comment.id) }}"  class="mb-4">
+        <textarea name="comment" id="editCommentContent-{{ comment.id }}" class="form-control"
+          placeholder="Edita tu comentario" required></textarea>
+        <br />
+        <div class="d-flex justify-content-end">
+          <button type="submit" class="btn btn-primary">
+            <i class="fas fa-paper-plane"></i> Guardar cambios
+          </button>
+          <button type="button" class="btn btn-secondary ml-2"
+            onclick="closeEditCommentModal({{ comment.id }})">Cancelar</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Renderiza respuestas recursivamente -->
+    {% if comment.replies %}
+    {% for reply in comment.replies %}
+    {{ comment_block(reply, current_user, level + 1) }}
+    {% endfor %}
+    {% endif %}
+  </div>
+</div>
+{% endmacro %}

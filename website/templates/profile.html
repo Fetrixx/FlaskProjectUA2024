@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}Perfil de {{ user.first_name }}{% endblock %}
+
+{% block content %}
+
+
+<div class="mt-4">
+    <h1>Perfil de {{ user.first_name }}</h1>
+    <div class="card mb-4">
+        <div class="card-body text-center">
+            <div>
+                <!-- Fondo del perfil -->
+                <div class="profile-header" 
+                style="background-image: url('{{ user.profile.background_picture }}'); border-radius:20px; height: 120px;" >
+                </div>
+                <!-- imagen del perfil -->
+                <span  class="w-100 h-100 d-flex flex-wrap justify-content-center align-items-center" style="margin-top: -100px;" >
+                    {% if user.profile_picture %}
+                        <img src="{{ user.profile_picture }}" alt="{{ user.first_name }}" class="rounded-circle" style="width: 180px; height: 180px; border: 10px solid lightblue;">
+                    {% else %}
+                        <img src="{{ url_for('static', filename='images/user-placeholder.jpg') }}" alt="{{ user.first_name }}" class="rounded-circle" style="width: 180px; height: 180px; border: 10px solid lightblue;">
+                    {% endif %}
+
+                    <div class="userProfileData d-flex flex-row justify-content-start align-items-baseline" style=" margin-left: 20px; height:fit-content; gap: 20px;  background-color: white; border-radius: 20px">
+                        <span class="d-flex flex-column justify-content-start align-items-baseline flex-wrap userProfileCard" >
+                            <span class="d-flex flex-row">
+                                <h2 style="margin: 0; height: fit-content;">{{ user.first_name }}</h2>
+                                <!-- boton seguir / editar -->
+                                <span class="ml-3">
+                                    {% if is_current_user %}
+                                        <a href="{{ url_for('views.edit_profile', user_id=user.id) }}" class="btn btn-warning">Editar Perfil</a> <!-- Botón para editar -->
+                                    {% else %}
+                                        {% if is_following %}
+                                            <form action="{{ url_for('views.unfollow', user_id=user.id) }}" method="POST" style="display:inline;">
+                                                <button type="submit" class="btn btn-danger mt-3">Dejar de Seguir</button>
+                                            </form> 
+                                        {% else %}
+                                            <form action="{{ url_for('views.follow', user_id=user.id) }}" method="POST" style="display:inline;">
+                                                <button type="submit" class="btn btn-primary mt-3">Seguir</button>
+                                            </form>
+                                        {% endif %}
+                                    {% endif %}
+                                </span>
+                            </span>
+
+                            <span style="font-size: 14px; font-style:italic; font-weight:lighter; height: fit-content;">
+                                @{{ user.username }} 
+                            </span>
+                            <p  style="height: fit-content;" class="text-muted">{{ user.email }}</p>
+                            <div class="d-flex flex-row" style="height: fit-content; gap:5px">
+                                <span class="badge badge-light">Publicaciones: {{ posts_count }}</span> <!-- Cantidad de publicaciones -->
+                                <span class="badge badge-light  ">Seguidores: {{ followers_count }}</span>
+                                <span onclick="goToUsersFollowed()" class="badge badge-primary" style="cursor: pointer;">
+                                    Seguidos: {{ following_count }}
+                                </span>                                
+                            </div>
+                        </span>
+
+
+                    </div>
+                </span>
+                <div class="d-flex flex-row flex-wrap justifi-content-start align-items-start mt-4" style="background-color: white;" >
+                    {% if user.profile.bio %}
+                        <div class="d-flex flex-column justify-content-start align-items-start">
+                            <h5>Biografia</h5>
+                            <p>{{ user.profile.bio }}</p> <!-- Biografía -->
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            
+        </div>
+    </div>
+
+    <h3>Publicaciones</h3>
+    <div class="d-flex flex-column flex-sm-row flex-wrap">
+        {% for post in posts %}
+            <div class="mb-3  d-flex col-12 col-sm-6 col-md-4">
+                <div class="card w-100">
+                    <div class="card-body">
+                        <div class="d-flex flex-column justify-content-between" style="height:100%">
+                            <span>
+                                <!-- Enlace para ver la publicación individual -->
+                                <a href="{{ url_for('views.view_post', post_id=post.id) }}"  class="btn btn-link d-inline" >
+                                    <i class="fa-brands fa-readme"></i>
+                                    Ver publicación
+                                </a>
+                                {% if post.content_type == 'image' and post.image_url %}
+                                    <img src="{{ post.image_url }}" alt="" class="img-fluid mt-2">
+                                {% elif post.content_type == 'video' and post.video_url %}
+                                    <div class="responsive-video">
+                                    <iframe src="{{ post.video_url }}" frameborder="0" allowfullscreen></iframe>
+                                    </div>
+                                {% endif %}
+                                <p class="card-text py-2">{{ post.data }}</p>
+                                
+                            </span>
+                            <span class="d-flex w-100 justify-content-between align-items-center flex-column">
+                                <!-- Botones de "Me gusta" y comentario -->
+                                <span class="d-flex justify-content-start align-items-center w-100">
+                                    <button type="submit" class="btn btn-link text-primary">
+                                        <i class="fas fa-thumbs-up" style="color: {{ 'blue' if post.liked else 'lightgray' }};"></i>
+                                        {{ post.likes_count }}
+                                    </button>
+                                    <button class="btn btn-link">
+                                    <i class="fa-solid fa-comment"></i> {{ post.comments|length }}
+                                    </button>
+                                </span>
+                                <small style="font-size: 12px;" class="text-muted d-flex justify-content-end w-100">
+                                    {{ post.date.strftime('%d-%m-%Y %I:%M:%S %p') }}
+                                </small>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+        {% if not posts %}
+            <p>No hay publicaciones disponibles.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

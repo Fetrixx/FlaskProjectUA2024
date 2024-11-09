@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+
+{% import "post_macros.html" as post_macros %}
+
+
+{% block content %}
+<div class="container">
+
+
+    <div class="overflow-auto">
+        <div class="list-group over" style="min-width: fit-content;">
+            
+            {{ post_macros.render_publications(_publication, current_user) }}
+            
+        </div>
+    </div>
+
+{% endblock %}
+
