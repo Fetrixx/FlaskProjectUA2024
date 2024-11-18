@@ -38,16 +38,18 @@ def edit_profile(user_id):
         username = request.form.get('username')
         first_name = request.form.get('first_name')
         bio = request.form.get('bio')
+        profile_picture = request.form.get('profile_picture')
         background_picture = request.form.get('background_picture')
+        
 
         print("Datos del usuario antes de la edición:")
         print("Username:", user.username)
         print("Name:", user.first_name)
-        print("Bio:", profile.bio)
         print("Profile Picture:", user.profile_picture)
-        print("Background Picture:", profile.background_picture)
+        # print("Bio:", profile.bio)
+        # print("Background Picture:", profile.background_picture)
 
-        user, profile = update_user_profile(user.id, first_name, bio, background_picture)
+        user, profile = update_user_profile(user.id, first_name, bio, background_picture, profile_picture )
 
         print("Datos del usuario después de la edición:")
         print("Username:", user.username)

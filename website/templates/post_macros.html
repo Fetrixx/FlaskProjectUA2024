@@ -68,12 +68,19 @@
 
   <!-- Botones de "Me gusta" y comentario -->
   <span class="d-flex justify-content-start align-items-center w-100">
-    <form method="POST" action="{{ url_for('publication_views.like_publication_route', publication_id=post.id) }}" class="d-inline-flex">
+    <!--
+        <form method="POST" action="{{ url_for('publication_views.like_publication_route', publication_id=post.id) }}" class="d-inline-flex">
       <button type="submit" class="btn btn-link text-primary">
         <i class="fas fa-thumbs-up" style="color: {{ 'blue' if post.liked else 'lightgray' }};"></i>
         {{ post.likes_count }}
       </button>
     </form>
+    -->
+    <button type="button" class="btn btn-link text-primary" onclick="likePost({{ post.id }})">
+      <i id="like-icon-{{ post.id }}" class="fas fa-thumbs-up" style="color: {{ 'blue' if post.liked else 'lightgray' }};"></i>
+      <span id="likes-count-{{ post.id }}">{{ post.likes_count }}</span> Likes
+    </button>
+    
     <button onclick="toggleCommentForm({{ post.id }})" class="btn btn-link">
       <i class="fa-solid fa-comment"></i> {{ post.comments|length }}
     </button>
@@ -87,7 +94,7 @@
 
   </span>
 
-  <!-- Formulario comentarar -->
+  <!-- Formulario comentar -->
   <div id="commentForm-{{ post.id }}" style="display:none;" class="comment-form mb-3 w-100">
     <form method="POST" action="{{ url_for('comment_views.comment', publication_id=post.id) }}">
       <textarea name="comment" class="form-control" placeholder="Escribe un comentario..." required></textarea>
@@ -171,12 +178,18 @@
 
       <span class="d-flex flex-row">
         <!-- Botón de "Me gusta" para el comentario -->
+         <!--
         <form method="POST" action="{{ url_for('comment_views.like_comment_route', comment_id=comment.id) }}" class="d-inline-flex">
           <button type="submit" class="btn btn-link text-primary">
             <i class="fas fa-thumbs-up" style="color: {{ 'blue' if comment.liked else 'lightgray' }};"></i>
             {{ comment.likes_count }}
           </button>
         </form>
+      -->
+        <button type="button" class="btn btn-link text-primary" onclick="likeComment({{ comment.id }})">
+          <i id="comment-like-icon-{{ comment.id }}" class="fas fa-thumbs-up" style="color: {{ 'blue' if comment.liked else 'lightgray' }};"></i>
+          <span id="comment-likes-count-{{ comment.id }}">{{ comment.likes_count }}</span>
+        </button>
         <!-- Botón de "Eliminar" si el usuario realizo el comentario -->
         <button onclick="toggleReplyForm({{ comment.id }})" class="btn btn-link reply-btn"><i
             class="fa-solid fa-reply"></i></button>
@@ -232,4 +245,70 @@
     {% endif %}
   </div>
 </div>
+
+
+<script>
+  function likePost(postId) {
+    // Realiza la solicitud AJAX para dar o quitar "me gusta"
+    fetch('/like/' + postId, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ postId: postId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Actualiza el contador de "me gusta"
+        const likesCountElement = document.getElementById('likes-count-' + postId);
+        if (likesCountElement) {
+            likesCountElement.textContent = data.likes_count;
+        }
+
+        // Cambia el color del ícono según el estado de "me gusta"
+        const likeIcon = document.getElementById('like-icon-' + postId);
+        if (likeIcon) {
+            likeIcon.style.color = data.playCuakSound ? 'blue' : 'lightgray';
+        }
+    })
+    .catch(error => {
+        console.error('Error al dar "me gusta":', error);
+    });
+  }
+
+  function likeComment(commentId) {
+    fetch('/like-comment/' + commentId, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            console.error('Error:', data.error);
+            return;
+        }
+
+        // Actualiza el contador de "likes" en el frontend
+        const likesCountElement = document.getElementById('comment-likes-count-' + commentId);
+        if (likesCountElement) {
+            likesCountElement.textContent = data.likes_count;
+        }
+
+        // Cambia el color del ícono dependiendo del estado de "me gusta"
+        const likeIcon = document.getElementById('comment-like-icon-' + commentId);
+        if (likeIcon) {
+            likeIcon.style.color = data.playCuakSound ? 'blue' : 'lightgray';
+        }
+    })
+    .catch(error => {
+        console.error('Error al procesar el "me gusta" del comentario:', error);
+    });
+}
+
+
+  </script>
+
+
 {% endmacro %}

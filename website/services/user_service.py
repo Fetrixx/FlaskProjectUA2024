@@ -16,7 +16,7 @@ def get_user_profile(user_id):
     posts_count = len(posts)
     return user, followers_count, following_count, posts, posts_count
 
-def update_user_profile(user_id, first_name, bio, background_picture):
+def update_user_profile(user_id, first_name, bio, background_picture, profile_picture):
     """Actualiza los datos de un usuario y su perfil"""
     user = User.query.get_or_404(user_id)
     profile = Profile.query.filter_by(user_id=user.id).first()
@@ -26,6 +26,7 @@ def update_user_profile(user_id, first_name, bio, background_picture):
         db.session.add(profile)
     
     user.first_name = first_name
+    user.profile_picture = profile_picture
     profile.bio = bio
     profile.background_picture = background_picture
     

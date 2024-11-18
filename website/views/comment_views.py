@@ -1,8 +1,9 @@
 # website/views/comment_views.py
 
-from flask import Blueprint, redirect, request, flash, url_for
+from flask import Blueprint, jsonify, redirect, request, flash, url_for
 from flask_login import login_required, current_user
 from ..services.comment_service import add_comment, delete_comment, like_comment, edit_comment
+from ..models.comment import Comment
 
 comment_views = Blueprint('comment_views', __name__)
 
@@ -26,11 +27,28 @@ def delete_comment_route(comment_id):
     delete_comment(comment_id)
     return redirect(url_for('home_views.home'))
 
+
+# @comment_views.route('/like-comment/<int:comment_id>', methods=['POST'])
+# @login_required
+# def like_comment_route(comment_id):
+#     success, play_cuak_sound = like_comment(comment_id)
+#     return redirect(url_for('home_views.home', play_cuak=play_cuak_sound))
+
+
 @comment_views.route('/like-comment/<int:comment_id>', methods=['POST'])
 @login_required
 def like_comment_route(comment_id):
     success, play_cuak_sound = like_comment(comment_id)
-    return redirect(url_for('home_views.home', play_cuak=play_cuak_sound))
+    comment = Comment.query.get(comment_id)
+    if success:
+        return jsonify({
+            'likes_count': comment.likes_count,
+            'playCuakSound': play_cuak_sound
+        }), 200
+    else:
+        return jsonify({'error': 'Comentario no encontrado.'}), 404
+
+
 
 @comment_views.route('/edit-comment/<int:comment_id>', methods=['POST'])
 @login_required

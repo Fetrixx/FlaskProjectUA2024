@@ -15,10 +15,10 @@ def delete_publication(publication_id):
     else:
         flash(['No puedes eliminar esta publicación.'], category='error')
 
-def like_publication(publication_id):
+def like_publication(publication_id, user_id):
     playCuakSound = False
     publication = Publication.query.get_or_404(publication_id)
-    existing_like = Like.query.filter_by(user_id=current_user.id, publication_id=publication.id).first()
+    existing_like = Like.query.filter_by(user_id=user_id, publication_id=publication.id).first()
 
     if existing_like:
         db.session.delete(existing_like)
@@ -26,13 +26,13 @@ def like_publication(publication_id):
         flash(['Has quitado tu "me gusta".'], category='info')
     else:
         playCuakSound = True
-        new_like = Like(user_id=current_user.id, publication_id=publication.id)
+        new_like = Like(user_id=user_id, publication_id=publication.id)
         db.session.add(new_like)
         publication.likes_count += 1
         flash(['Has dado "me gusta" a la publicación.'], category='success')
 
     db.session.commit()
-    return playCuakSound
+    return publication.likes_count, playCuakSound
 
 def edit_publication(publication_id, new_content, image_url, video_url, content_type):
     publication = Publication.query.get(publication_id)
