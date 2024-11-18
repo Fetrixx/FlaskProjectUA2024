@@ -26,26 +26,6 @@ def delete_comment(comment_id):
     else:
         flash(['No puedes eliminar este comentario.'], category='error')
 
-# def like_comment(comment_id):
-#     playCuakSound = False
-#     comment = Comment.query.get(comment_id)
-#     if not comment:
-#         flash(['Comentario no encontrado.'], category='error')
-#         return False, playCuakSound
-# 
-#     like = Like.query.filter_by(user_id=current_user.id, comment_id=comment_id).first()
-#     if like:
-#         db.session.delete(like)
-#         flash(['Me gusta eliminado del comentario'], category='success')
-#     else:
-#         new_like = Like(user_id=current_user.id, comment_id=comment_id)
-#         db.session.add(new_like)
-#         playCuakSound = True
-#         flash(['Te gusta el comentario!'], category='success')
-# 
-#     db.session.commit()
-#     return True, playCuakSound
-
 def like_comment(comment_id):
     playCuakSound = False
     comment = Comment.query.get(comment_id)
